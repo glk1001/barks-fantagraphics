@@ -29,7 +29,7 @@ from consts import (
     DEST_TARGET_ASPECT_RATIO,
     DEST_JPG_QUALITY,
     DEST_JPG_COMPRESS_LEVEL,
-    CONFIGS_SUBDIR,
+    STORY_INFO_SUBDIR,
     BARKS_ROOT_DIR,
     get_font_path,
     INSET_FILE_EXT,
@@ -296,7 +296,9 @@ def get_comic_book(stories: ComicBookInfoDict, ini_file: str) -> ComicBook:
     issue_title = "" if "issue_title" not in config["info"] else config["info"]["issue_title"]
     file_title = config["info"]["file_title"]
     lookup_title = get_lookup_title(title, file_title)
-    intro_inset_file = str(os.path.join(CONFIGS_SUBDIR, get_inset_filename(ini_file, file_title)))
+    intro_inset_file = str(
+        os.path.join(STORY_INFO_SUBDIR, get_inset_filename(ini_file, file_title))
+    )
 
     cb_info: ComicBookInfo = stories[lookup_title]
     fanta_info = SOURCE_COMICS[config["info"]["source_comic"]]
