@@ -4,7 +4,7 @@ import os
 from dataclasses import dataclass
 from typing import List
 
-from comics_info import (
+from .comics_info import (
     ISSUE_NAME_AS_TITLE,
     MONTH_AS_LONG_STR,
     SHORT_ISSUE_NAME,
@@ -16,7 +16,7 @@ from comics_info import (
     SourceBook,
     get_formatted_day,
 )
-from consts import (
+from .consts import (
     PageType,
     IMAGES_SUBDIR,
     THE_CHRONOLOGICAL_DIRS_DIR,
@@ -29,7 +29,7 @@ from consts import (
     DEST_TARGET_ASPECT_RATIO,
     DEST_JPG_QUALITY,
     DEST_JPG_COMPRESS_LEVEL,
-    STORY_INFO_SUBDIR,
+    STORY_TITLES_DIR,
     BARKS_ROOT_DIR,
     get_font_path,
     INSET_FILE_EXT,
@@ -297,7 +297,7 @@ def get_comic_book(stories: ComicBookInfoDict, ini_file: str) -> ComicBook:
     file_title = config["info"]["file_title"]
     lookup_title = get_lookup_title(title, file_title)
     intro_inset_file = str(
-        os.path.join(STORY_INFO_SUBDIR, get_inset_filename(ini_file, file_title))
+        os.path.join(STORY_TITLES_DIR, get_inset_filename(ini_file, file_title))
     )
 
     cb_info: ComicBookInfo = stories[lookup_title]

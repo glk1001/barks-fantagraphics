@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/barks_fantagraphics.iml" filepath="$PROJECT_DIR$/.idea/barks_fantagraphics.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/barks-fantagraphics.iml" filepath="$PROJECT_DIR$/.idea/barks-fantagraphics.iml" />
     </modules>
   </component>
 </project>

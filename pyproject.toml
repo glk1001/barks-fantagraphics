@@ -1,0 +1,12 @@
+[project]
+name = "barks-fantagraphics"
+version = "0.0.1"
+description = "Python modules to read Barks Fantagraphics info"
+requires-python = ">=3.9"
+
+[tool.setuptools.package-dir]
+barks_fantagraphics = 'src/barks_fantagraphics'
+
+[build-system]
+requires = ["setuptools >= 61.0.0"]
+build-backend = "setuptools.build_meta"

@@ -3,7 +3,7 @@ import re
 from dataclasses import dataclass
 from typing import List, Tuple
 
-from consts import THIS_DIR, PUBLICATION_INFO_SUBDIR
+from src.consts import THIS_DIR, PUBLICATION_INFO_SUBDIR
 
 STORY_INDEX_FILE = os.path.join(THIS_DIR, PUBLICATION_INFO_SUBDIR, "wiki-story-index.txt")
 

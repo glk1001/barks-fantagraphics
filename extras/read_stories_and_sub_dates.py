@@ -4,8 +4,8 @@ import os.path
 from dataclasses import dataclass
 from typing import Dict, List, Tuple
 
-import comics_info
-from comics_info import (
+from src import comics_info
+from src.comics_info import (
     ComicBookInfo,
     MONTH_AS_SHORT_STR,
     CH,
@@ -19,8 +19,8 @@ from comics_info import (
     US,
     VP,
 )
-from comics_info import MONTH_AS_LONG_STR, get_formatted_day
-from consts import THIS_DIR, SUBMISSION_DATES_SUBDIR
+from src.comics_info import MONTH_AS_LONG_STR, get_formatted_day
+from src.consts import THIS_DIR, SUBMISSION_DATES_SUBDIR
 from read_stories import get_all_stories, StoryInfo
 from read_sub_dates import get_all_submitted_info, SubmittedInfo, SubmittedInfoDict
 
