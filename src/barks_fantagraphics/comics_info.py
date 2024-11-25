@@ -1,8 +1,11 @@
 import collections
 import csv
+import os
 from dataclasses import dataclass
 from datetime import date
 from typing import Dict, OrderedDict
+
+from .consts import PUBLICATION_INFO_SUBDIR, STORIES_INFO_FILENAME
 
 JAN = 1
 FEB = 2
@@ -66,7 +69,9 @@ class ComicBookInfo:
 ComicBookInfoDict = OrderedDict[str, ComicBookInfo]
 
 
-def get_all_comic_book_info(stories_filename: str) -> ComicBookInfoDict:
+def get_all_comic_book_info(story_info_dir: str) -> ComicBookInfoDict:
+    stories_filename = os.path.join(story_info_dir, PUBLICATION_INFO_SUBDIR, STORIES_INFO_FILENAME)
+
     current_number_in_series = SERIES_INFO_START_NUMBERS.copy()
     all_info: ComicBookInfoDict = collections.OrderedDict()
 
