@@ -79,6 +79,7 @@ class ComicBook:
     submitted_year: int
     publication_text: str
     comic_book_info: ComicBookInfo
+    config_page_images: List[OriginalPage]
     page_images_in_order: List[OriginalPage]
 
     def __post_init__(self):
@@ -252,6 +253,10 @@ def get_comic_book(stories: ComicBookInfoDict, ini_file: str) -> ComicBook:
     if "extra_pub_info" in config["info"]:
         publication_text += "\n" + config["info"]["extra_pub_info"]
 
+    config_page_images = [
+        OriginalPage(key, PageType[config["pages"][key]]) for key in config["pages"]
+    ]
+
     comic = ComicBook(
         ini_file=ini_file,
         title=title,
@@ -283,9 +288,8 @@ def get_comic_book(stories: ComicBookInfoDict, ini_file: str) -> ComicBook:
         submitted_year=cb_info.submitted_year,
         publication_text=publication_text,
         comic_book_info=cb_info,
-        page_images_in_order=[
-            OriginalPage(key, PageType[config["pages"][key]]) for key in config["pages"]
-        ],
+        config_page_images=config_page_images,
+        page_images_in_order=_get_pages_in_order(config_page_images),
     )
 
     if not os.path.isdir(comic.srce_dir):
@@ -300,6 +304,22 @@ def get_comic_book(stories: ComicBookInfoDict, ini_file: str) -> ComicBook:
         )
 
     return comic
+
+
+def _get_pages_in_order(config_pages: List[OriginalPage]) -> List[OriginalPage]:
+    page_images = []
+    for config_page in config_pages:
+        if "-" not in config_page.page_filenames:
+            page_images.append(config_page)
+        else:
+            start, end = config_page.page_filenames.split("-")
+            start_num = int(start)
+            end_num = int(end)
+            for file_num in range(start_num, end_num + 1):
+                filename = f"{file_num:03d}"
+                page_images.append(OriginalPage(filename, config_page.page_type))
+
+    return page_images
 
 
 def get_inset_filename(ini_file: str, file_title: str) -> str:
