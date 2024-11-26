@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import List
 
 from .comic_book import ComicBook, get_comic_book
+from .comics_consts import STORY_TITLES_DIR
 from .comics_info import get_all_comic_book_info
-from .consts import STORY_TITLES_DIR
 
 
 def get_default_comics_database_dir() -> str:

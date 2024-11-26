@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Dict, OrderedDict
 
-from .consts import PUBLICATION_INFO_SUBDIR, STORIES_INFO_FILENAME
+from .comics_consts import PUBLICATION_INFO_SUBDIR, STORIES_INFO_FILENAME
 
 JAN = 1
 FEB = 2
