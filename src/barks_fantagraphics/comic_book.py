@@ -79,7 +79,7 @@ class ComicBook:
     submitted_year: int
     publication_text: str
     comic_book_info: ComicBookInfo
-    images_in_order: List[OriginalPage]
+    page_images_in_order: List[OriginalPage]
 
     def __post_init__(self):
         assert self.series_name != ""
@@ -283,7 +283,7 @@ def get_comic_book(stories: ComicBookInfoDict, ini_file: str) -> ComicBook:
         submitted_year=cb_info.submitted_year,
         publication_text=publication_text,
         comic_book_info=cb_info,
-        images_in_order=[
+        page_images_in_order=[
             OriginalPage(key, PageType[config["pages"][key]]) for key in config["pages"]
         ],
     )
