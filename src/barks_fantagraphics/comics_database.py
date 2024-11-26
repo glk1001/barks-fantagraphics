@@ -1,5 +1,5 @@
-import logging
 import os
+from configparser import ConfigParser, ExtendedInterpolation
 from pathlib import Path
 from typing import List
 
@@ -31,16 +31,27 @@ class ComicsDatabase:
         return os.path.join(self._story_titles_dir, story_title + ".ini")
 
     def get_all_story_titles(self) -> List[str]:
-        possible_ini_files = [f for f in os.listdir(self._story_titles_dir) if f.endswith(".ini")]
+        ini_files = [f for f in os.listdir(self._story_titles_dir) if f.endswith(".ini")]
 
         story_titles = []
-        for file in possible_ini_files:
-            ini_file = os.path.join(self._story_titles_dir, file)
-            if os.path.islink(ini_file):
-                logging.debug(f'Skipping ini file symlink in "{ini_file}".')
-                continue
+        for ini_file in ini_files:
             story_title = Path(ini_file).stem
             story_titles.append(story_title)
+
+        return sorted(story_titles)
+
+    def get_all_story_titles_in_fantagraphics_volume(self, volume_num: int) -> List[str]:
+        ini_files = [f for f in os.listdir(self._story_titles_dir) if f.endswith(".ini")]
+
+        config = ConfigParser(interpolation=ExtendedInterpolation())
+        fanta_key = f"FANTA_{volume_num:02}"
+        story_titles = []
+        for file in ini_files:
+            ini_file = os.path.join(self._story_titles_dir, file)
+            config.read(ini_file)
+            if config["info"]["source_comic"] == fanta_key:
+                story_title = Path(ini_file).stem
+                story_titles.append(story_title)
 
         return sorted(story_titles)
 
