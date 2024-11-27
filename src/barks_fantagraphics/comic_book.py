@@ -2,6 +2,7 @@ import configparser
 import logging
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List
 
 from .comics_consts import (
@@ -10,7 +11,6 @@ from .comics_consts import (
     PageType,
     BARKS_ROOT_DIR,
     IMAGES_SUBDIR,
-    STORY_TITLES_DIR,
     THE_CHRONOLOGICAL_DIRS_DIR,
     THE_CHRONOLOGICAL_DIR,
     THE_COMICS_DIR,
@@ -236,7 +236,7 @@ def get_comic_book(stories: ComicBookInfoDict, ini_file: str) -> ComicBook:
     issue_title = "" if "issue_title" not in config["info"] else config["info"]["issue_title"]
     file_title = config["info"]["file_title"]
     lookup_title = get_lookup_title(title, file_title)
-    intro_inset_file = str(os.path.join(STORY_TITLES_DIR, get_inset_filename(ini_file, file_title)))
+    intro_inset_file = get_inset_file(ini_file, file_title)
 
     cb_info: ComicBookInfo = stories[lookup_title]
     fanta_info = SOURCE_COMICS[config["info"]["source_comic"]]
@@ -322,13 +322,12 @@ def _get_pages_in_order(config_pages: List[OriginalPage]) -> List[OriginalPage]:
     return page_images
 
 
-def get_inset_filename(ini_file: str, file_title: str) -> str:
-    if file_title:
-        return file_title + " Inset" + INSET_FILE_EXT
+def get_inset_file(ini_file: str, file_title: str) -> str:
+    prefix = file_title if file_title else Path(ini_file).stem
+    inset_filename = prefix + " Inset" + INSET_FILE_EXT
+    ini_file_dir = os.path.dirname(ini_file)
 
-    ini_filename = os.path.splitext(os.path.basename(ini_file))[0]
-
-    return ini_filename + " Inset" + INSET_FILE_EXT
+    return str(os.path.join(ini_file_dir, inset_filename))
 
 
 def get_formatted_first_published_str(info: ComicBookInfo) -> str:

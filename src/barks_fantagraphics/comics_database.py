@@ -1,11 +1,11 @@
 import os
 from configparser import ConfigParser, ExtendedInterpolation
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 from .comic_book import ComicBook, get_comic_book
-from .comics_consts import STORY_TITLES_DIR
-from .comics_info import get_all_comic_book_info
+from .comics_consts import STORY_TITLES_DIR, BARKS_ROOT_DIR
+from .comics_info import get_all_comic_book_info, SOURCE_COMICS
 
 
 def get_default_comics_database_dir() -> str:
@@ -54,6 +54,31 @@ class ComicsDatabase:
                 story_titles.append(story_title)
 
         return sorted(story_titles)
+
+    # "$HOME/Books/Carl Barks/Fantagraphics/Carl Barks Vol. 2 - Donald Duck - Frozen Gold"
+    #     root_dir = "$HOME/Books/Carl Barks/Fantagraphics"
+    #     subdir = "Fantagraphics"
+    #     title = "Carl Barks Vol. 2 - Donald Duck - Frozen Gold"
+    def _get_fantagraphics_root_dir_sub_dir_and_title(
+        self, volume_num: int
+    ) -> Tuple[str, str, str]:
+        fanta_key = f"FANTA_{volume_num:02}"
+        fanta_info = SOURCE_COMICS[fanta_key]
+        return (
+            str(os.path.join(BARKS_ROOT_DIR, fanta_info.subdir)),
+            fanta_info.subdir,
+            fanta_info.title,
+        )
+
+    def get_fantagraphics_root_dir(self, volume_num: int) -> str:
+        return self._get_fantagraphics_root_dir_sub_dir_and_title(volume_num)[0]
+
+    def get_fantagraphics_volume_subdir(self, volume_num: int) -> str:
+        return self._get_fantagraphics_root_dir_sub_dir_and_title(volume_num)[1]
+
+    def get_fantagraphics_volume_dir(self, volume_num: int) -> str:
+        srce_root_dir, _, title = self._get_fantagraphics_root_dir_sub_dir_and_title(volume_num)
+        return os.path.join(srce_root_dir, title)
 
 
 def _get_comics_database_dir(db_dir: str) -> str:
