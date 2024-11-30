@@ -1,15 +1,10 @@
-import configparser
-import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
 from .comics_consts import (
-    get_font_path,
-    INTRO_TITLE_DEFAULT_FONT_FILE,
     PageType,
-    BARKS_ROOT_DIR,
     IMAGES_SUBDIR,
     THE_CHRONOLOGICAL_DIRS_DIR,
     THE_CHRONOLOGICAL_DIR,
@@ -23,9 +18,7 @@ from .comics_info import (
     SHORT_ISSUE_NAME,
     SILENT_NIGHT,
     SILENT_NIGHT_PUBLICATION_ISSUE,
-    SOURCE_COMICS,
     ComicBookInfo,
-    ComicBookInfoDict,
     SourceBook,
     get_formatted_day,
 )
@@ -67,8 +60,10 @@ class ComicBook:
     required_dim: RequiredDimensions
     fanta_info: SourceBook
     srce_dir: str
-    srce_file_ext: str
     srce_fixes_dir: str
+    srce_upscayled_dir: str
+    srce_restored_dir: str
+    srce_restored_fixes_dir: str  # TODO: Get rid of this????
     panel_segments_dir: str
     series_name: str
     number_in_series: int
@@ -98,9 +93,19 @@ class ComicBook:
     def get_srce_fixes_image_dir(self) -> str:
         return os.path.join(self.srce_fixes_dir, IMAGES_SUBDIR)
 
+    def get_srce_upscayled_image_dir(self) -> str:
+        return os.path.join(self.srce_upscayled_dir, IMAGES_SUBDIR)
+
+    def get_srce_restored_image_dir(self) -> str:
+        return os.path.join(self.srce_restored_dir, IMAGES_SUBDIR)
+
+    def get_srce_restored_fixes_image_dir(self) -> str:
+        return os.path.join(self.srce_restored_fixes_dir, IMAGES_SUBDIR)
+
     def get_srce_segments_root_dir(self) -> str:
         return os.path.dirname(self.panel_segments_dir)
 
+    # TODO: Should dest stuff be elsewhere??
     def get_dest_root_dir(self) -> str:
         return THE_CHRONOLOGICAL_DIRS_DIR
 
@@ -224,86 +229,6 @@ def get_main_publication_info(
     )
 
     return publication_text
-
-
-def get_comic_book(stories: ComicBookInfoDict, ini_file: str) -> ComicBook:
-    logging.info(f'Getting comic book info from config file "{ini_file}".')
-
-    config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
-    config.read(ini_file)
-
-    title = config["info"]["title"]
-    issue_title = "" if "issue_title" not in config["info"] else config["info"]["issue_title"]
-    file_title = config["info"]["file_title"]
-    lookup_title = get_lookup_title(title, file_title)
-    intro_inset_file = get_inset_file(ini_file, file_title)
-
-    cb_info: ComicBookInfo = stories[lookup_title]
-    fanta_info = SOURCE_COMICS[config["info"]["source_comic"]]
-    srce_root_dir = str(os.path.join(BARKS_ROOT_DIR, fanta_info.subdir))
-    srce_dir = os.path.join(srce_root_dir, fanta_info.title)
-    srce_file_ext = fanta_info.srce_file_ext
-    srce_fixup_dir = os.path.join(srce_root_dir + "-fixes-and-additions", fanta_info.title)
-    panel_segments_dir = str(os.path.join(srce_root_dir + "-panel-segments", fanta_info.title))
-
-    publication_date = get_formatted_first_published_str(cb_info)
-    submitted_date = get_formatted_submitted_date(cb_info)
-
-    publication_text = get_main_publication_info(file_title, cb_info, fanta_info)
-    if "extra_pub_info" in config["info"]:
-        publication_text += "\n" + config["info"]["extra_pub_info"]
-
-    config_page_images = [
-        OriginalPage(key, PageType[config["pages"][key]]) for key in config["pages"]
-    ]
-
-    comic = ComicBook(
-        ini_file=ini_file,
-        title=title,
-        title_font_file=get_font_path(
-            config["info"].get("title_font_file", INTRO_TITLE_DEFAULT_FONT_FILE)
-        ),
-        title_font_size=config["info"].getint("title_font_size", INTRO_TITLE_DEFAULT_FONT_SIZE),
-        file_title=file_title,
-        issue_title=issue_title,
-        author_font_size=config["info"].getint("author_font_size", INTRO_AUTHOR_DEFAULT_FONT_SIZE),
-        srce_min_panels_bbox_width=-1,
-        srce_max_panels_bbox_width=-1,
-        srce_min_panels_bbox_height=-1,
-        srce_max_panels_bbox_height=-1,
-        srce_av_panels_bbox_width=-1,
-        srce_av_panels_bbox_height=-1,
-        required_dim=RequiredDimensions(),
-        fanta_info=fanta_info,
-        srce_dir=srce_dir,
-        srce_file_ext=srce_file_ext,
-        srce_fixes_dir=srce_fixup_dir,
-        panel_segments_dir=panel_segments_dir,
-        series_name=cb_info.series_name,
-        number_in_series=cb_info.number_in_series,
-        chronological_number=cb_info.chronological_number,
-        intro_inset_file=intro_inset_file,
-        publication_date=publication_date,
-        submitted_date=submitted_date,
-        submitted_year=cb_info.submitted_year,
-        publication_text=publication_text,
-        comic_book_info=cb_info,
-        config_page_images=config_page_images,
-        page_images_in_order=_get_pages_in_order(config_page_images),
-    )
-
-    if not os.path.isdir(comic.srce_dir):
-        raise Exception(f'Could not find srce directory "{comic.srce_dir}".')
-    if not os.path.isdir(comic.get_srce_image_dir()):
-        raise Exception(f'Could not find srce image directory "{comic.get_srce_image_dir()}".')
-    if not os.path.isdir(comic.srce_fixes_dir):
-        raise Exception(f'Could not find srce fixup directory "{comic.srce_fixes_dir}".')
-    if not os.path.isdir(comic.get_srce_fixes_image_dir()):
-        raise Exception(
-            f'Could not find srce fixup image directory "{comic.get_srce_fixes_image_dir()}".'
-        )
-
-    return comic
 
 
 def _get_pages_in_order(config_pages: List[OriginalPage]) -> List[OriginalPage]:

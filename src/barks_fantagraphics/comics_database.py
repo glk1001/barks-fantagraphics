@@ -1,11 +1,42 @@
+import configparser
+import logging
 import os
 from configparser import ConfigParser, ExtendedInterpolation
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
-from .comic_book import ComicBook, get_comic_book
-from .comics_consts import STORY_TITLES_DIR, BARKS_ROOT_DIR
-from .comics_info import get_all_comic_book_info, SOURCE_COMICS
+from .comic_book import (
+    ComicBook,
+    OriginalPage,
+    INTRO_TITLE_DEFAULT_FONT_SIZE,
+    INTRO_AUTHOR_DEFAULT_FONT_SIZE,
+    RequiredDimensions,
+    get_inset_file,
+    get_formatted_first_published_str,
+    get_formatted_submitted_date,
+    get_lookup_title,
+    get_main_publication_info,
+    _get_pages_in_order,
+)
+from .comics_consts import (
+    PageType,
+    get_font_path,
+    IMAGES_SUBDIR,
+    BARKS_ROOT_DIR,
+    INTRO_TITLE_DEFAULT_FONT_FILE,
+    STORY_TITLES_DIR,
+)
+from .comics_info import (
+    ComicBookInfo,
+    SOURCE_COMICS,
+    FANTAGRAPHICS_DIRNAME,
+    FANTAGRAPHICS_UPSCAYLED_DIRNAME,
+    FANTAGRAPHICS_RESTORED_DIRNAME,
+    FANTAGRAPHICS_RESTORED_FIXES_DIRNAME,
+    FANTAGRAPHICS_FIXES_AND_ADDITIONS_DIRNAME,
+    FANTAGRAPHICS_PANEL_SEGMENTS_DIRNAME,
+    get_all_comic_book_info,
+)
 
 
 def get_default_comics_database_dir() -> str:
@@ -24,9 +55,6 @@ class ComicsDatabase:
     def get_story_titles_dir(self) -> str:
         return self._story_titles_dir
 
-    def get_comic_book(self, story_title: str) -> ComicBook:
-        return get_comic_book(self._all_comic_book_info, self.get_ini_file(story_title))
-
     def get_ini_file(self, story_title: str) -> str:
         return os.path.join(self._story_titles_dir, story_title + ".ini")
 
@@ -40,45 +68,234 @@ class ComicsDatabase:
 
         return sorted(story_titles)
 
-    def get_all_story_titles_in_fantagraphics_volume(self, volume_num: int) -> List[str]:
+    def get_all_story_titles_in_fantagraphics_volume(self, volume_nums: List[int]) -> List[str]:
         ini_files = [f for f in os.listdir(self._story_titles_dir) if f.endswith(".ini")]
 
         config = ConfigParser(interpolation=ExtendedInterpolation())
-        fanta_key = f"FANTA_{volume_num:02}"
         story_titles = []
-        for file in ini_files:
-            ini_file = os.path.join(self._story_titles_dir, file)
-            config.read(ini_file)
-            if config["info"]["source_comic"] == fanta_key:
-                story_title = Path(ini_file).stem
-                story_titles.append(story_title)
+        for volume_num in volume_nums:
+            fanta_key = f"FANTA_{volume_num:02}"
+            for file in ini_files:
+                ini_file = os.path.join(self._story_titles_dir, file)
+                config.read(ini_file)
+                if config["info"]["source_comic"] == fanta_key:
+                    story_title = Path(ini_file).stem
+                    story_titles.append(story_title)
 
         return sorted(story_titles)
 
     # "$HOME/Books/Carl Barks/Fantagraphics/Carl Barks Vol. 2 - Donald Duck - Frozen Gold"
-    #     root_dir = "$HOME/Books/Carl Barks/Fantagraphics"
-    #     subdir = "Fantagraphics"
-    #     title = "Carl Barks Vol. 2 - Donald Duck - Frozen Gold"
-    def _get_fantagraphics_root_dir_sub_dir_and_title(
-        self, volume_num: int
-    ) -> Tuple[str, str, str]:
+    #     root_dir      = "$HOME/Books/Carl Barks/Fantagraphics"
+    #     fanta dirname = "Fantagraphics"
+    #     title         = "Carl Barks Vol. 2 - Donald Duck - Frozen Gold"
+    def get_fantagraphics_volume_title(self, volume_num: int) -> str:
         fanta_key = f"FANTA_{volume_num:02}"
         fanta_info = SOURCE_COMICS[fanta_key]
-        return (
-            str(os.path.join(BARKS_ROOT_DIR, fanta_info.subdir)),
-            fanta_info.subdir,
-            fanta_info.title,
-        )
+        return fanta_info.title
 
-    def get_fantagraphics_root_dir(self, volume_num: int) -> str:
-        return self._get_fantagraphics_root_dir_sub_dir_and_title(volume_num)[0]
+    def _get_root_dir(self, fanta_subdir: str) -> str:
+        return str(os.path.join(BARKS_ROOT_DIR, fanta_subdir))
 
-    def get_fantagraphics_volume_subdir(self, volume_num: int) -> str:
-        return self._get_fantagraphics_root_dir_sub_dir_and_title(volume_num)[1]
+    def get_fantagraphics_root_dir(self) -> str:
+        return self._get_root_dir(self.get_fantagraphics_dirname())
+
+    def get_fantagraphics_dirname(self) -> str:
+        return FANTAGRAPHICS_DIRNAME
 
     def get_fantagraphics_volume_dir(self, volume_num: int) -> str:
-        srce_root_dir, _, title = self._get_fantagraphics_root_dir_sub_dir_and_title(volume_num)
-        return os.path.join(srce_root_dir, title)
+        title = self.get_fantagraphics_volume_title(volume_num)
+        return str(os.path.join(self.get_fantagraphics_root_dir(), title))
+
+    def get_upscayled_fantagraphics_root_dir(self) -> str:
+        return self._get_root_dir(self.get_upscayled_fantagraphics_dirname())
+
+    def get_upscayled_fantagraphics_dirname(self) -> str:
+        return FANTAGRAPHICS_UPSCAYLED_DIRNAME
+
+    def get_upscayled_fantagraphics_volume_dir(self, volume_num: int) -> str:
+        title = self.get_fantagraphics_volume_title(volume_num)
+        return str(os.path.join(self.get_upscayled_fantagraphics_root_dir(), title))
+
+    def get_restored_fantagraphics_root_dir(self) -> str:
+        return self._get_root_dir(self.get_restored_fantagraphics_dirname())
+
+    def get_restored_fantagraphics_dirname(self) -> str:
+        return FANTAGRAPHICS_RESTORED_DIRNAME
+
+    def get_restored_fantagraphics_volume_dir(self, volume_num: int) -> str:
+        title = self.get_fantagraphics_volume_title(volume_num)
+        return str(os.path.join(self.get_restored_fantagraphics_root_dir(), title))
+
+    def get_fantagraphics_panel_segments_root_dir(self) -> str:
+        return self._get_root_dir(self.get_fantagraphics_panel_segments_dirname())
+
+    def get_fantagraphics_panel_segments_dirname(self) -> str:
+        return FANTAGRAPHICS_PANEL_SEGMENTS_DIRNAME
+
+    def get_fantagraphics_panel_segments_volume_dir(self, volume_num: int) -> str:
+        title = self.get_fantagraphics_volume_title(volume_num)
+        return str(os.path.join(self.get_fantagraphics_panel_segments_root_dir(), title))
+
+    def get_fantagraphics_fixes_and_additions_root_dir(self) -> str:
+        return self._get_root_dir(self.get_fantagraphics_fixes_and_additions_dirname())
+
+    def get_fantagraphics_fixes_and_additions_dirname(self) -> str:
+        return FANTAGRAPHICS_FIXES_AND_ADDITIONS_DIRNAME
+
+    def get_fantagraphics_fixes_and_additions_volume_dir(self, volume_num: int) -> str:
+        title = self.get_fantagraphics_volume_title(volume_num)
+        return str(os.path.join(self.get_fantagraphics_fixes_and_additions_root_dir(), title))
+
+    def get_restored_fantagraphics_fixes_root_dir(self) -> str:
+        return self._get_root_dir(self.get_restored_fantagraphics_fixes_dirname())
+
+    def get_restored_fantagraphics_fixes_dirname(self) -> str:
+        return FANTAGRAPHICS_RESTORED_FIXES_DIRNAME
+
+    def get_restored_fantagraphics_fixes_volume_dir(self, volume_num: int) -> str:
+        title = self.get_fantagraphics_volume_title(volume_num)
+        return str(os.path.join(self.get_restored_fantagraphics_fixes_root_dir(), title))
+
+    def make_all_fantagraphics_directories(self) -> None:
+        for volume in range(2, 21):
+            os.makedirs(
+                os.path.join(self.get_restored_fantagraphics_volume_dir(volume), IMAGES_SUBDIR),
+                exist_ok=True,
+            )
+            os.makedirs(
+                os.path.join(
+                    self.get_restored_fantagraphics_fixes_volume_dir(volume), IMAGES_SUBDIR
+                ),
+                exist_ok=True,
+            )
+            os.makedirs(
+                os.path.join(
+                    self.get_fantagraphics_fixes_and_additions_volume_dir(volume), IMAGES_SUBDIR
+                ),
+                exist_ok=True,
+            )
+            os.makedirs(
+                os.path.join(self.get_upscayled_fantagraphics_volume_dir(volume), IMAGES_SUBDIR),
+                exist_ok=True,
+            )
+            os.makedirs(
+                os.path.join(
+                    self.get_fantagraphics_panel_segments_volume_dir(volume), IMAGES_SUBDIR
+                ),
+                exist_ok=True,
+            )
+
+    def get_comic_book(self, story_title: str) -> ComicBook:
+        ini_file = self.get_ini_file(story_title)
+        logging.info(f'Getting comic book info from config file "{ini_file}".')
+
+        config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
+        config.read(ini_file)
+
+        title = config["info"]["title"]
+        issue_title = "" if "issue_title" not in config["info"] else config["info"]["issue_title"]
+        file_title = config["info"]["file_title"]
+        lookup_title = get_lookup_title(title, file_title)
+        intro_inset_file = get_inset_file(ini_file, file_title)
+
+        cb_info: ComicBookInfo = self._all_comic_book_info[lookup_title]
+        fanta_info = SOURCE_COMICS[config["info"]["source_comic"]]
+        srce_dir = self.get_fantagraphics_volume_dir(fanta_info.volume)
+        srce_fixes_dir = self.get_fantagraphics_fixes_and_additions_volume_dir(fanta_info.volume)
+        srce_upscayled_dir = self.get_upscayled_fantagraphics_volume_dir(fanta_info.volume)
+        srce_restored_dir = self.get_restored_fantagraphics_volume_dir(fanta_info.volume)
+        srce_restored_fixes_dir = self.get_restored_fantagraphics_fixes_volume_dir(
+            fanta_info.volume
+        )
+        panel_segments_dir = self.get_fantagraphics_panel_segments_volume_dir(fanta_info.volume)
+
+        publication_date = get_formatted_first_published_str(cb_info)
+        submitted_date = get_formatted_submitted_date(cb_info)
+
+        publication_text = get_main_publication_info(file_title, cb_info, fanta_info)
+        if "extra_pub_info" in config["info"]:
+            publication_text += "\n" + config["info"]["extra_pub_info"]
+
+        config_page_images = [
+            OriginalPage(key, PageType[config["pages"][key]]) for key in config["pages"]
+        ]
+
+        comic = ComicBook(
+            ini_file=ini_file,
+            title=title,
+            title_font_file=get_font_path(
+                config["info"].get("title_font_file", INTRO_TITLE_DEFAULT_FONT_FILE)
+            ),
+            title_font_size=config["info"].getint("title_font_size", INTRO_TITLE_DEFAULT_FONT_SIZE),
+            file_title=file_title,
+            issue_title=issue_title,
+            author_font_size=config["info"].getint(
+                "author_font_size", INTRO_AUTHOR_DEFAULT_FONT_SIZE
+            ),
+            srce_min_panels_bbox_width=-1,
+            srce_max_panels_bbox_width=-1,
+            srce_min_panels_bbox_height=-1,
+            srce_max_panels_bbox_height=-1,
+            srce_av_panels_bbox_width=-1,
+            srce_av_panels_bbox_height=-1,
+            required_dim=RequiredDimensions(),
+            fanta_info=fanta_info,
+            srce_dir=srce_dir,
+            srce_fixes_dir=srce_fixes_dir,
+            srce_upscayled_dir=srce_upscayled_dir,
+            srce_restored_dir=srce_restored_dir,
+            srce_restored_fixes_dir=srce_restored_fixes_dir,
+            panel_segments_dir=panel_segments_dir,
+            series_name=cb_info.series_name,
+            number_in_series=cb_info.number_in_series,
+            chronological_number=cb_info.chronological_number,
+            intro_inset_file=intro_inset_file,
+            publication_date=publication_date,
+            submitted_date=submitted_date,
+            submitted_year=cb_info.submitted_year,
+            publication_text=publication_text,
+            comic_book_info=cb_info,
+            config_page_images=config_page_images,
+            page_images_in_order=_get_pages_in_order(config_page_images),
+        )
+
+        if not os.path.isdir(comic.srce_dir):
+            raise Exception(f'Could not find srce directory "{comic.srce_dir}".')
+        if not os.path.isdir(comic.get_srce_image_dir()):
+            raise Exception(f'Could not find srce image directory "{comic.get_srce_image_dir()}".')
+        if not os.path.isdir(comic.srce_upscayled_dir):
+            raise Exception(
+                f'Could not find srce upscayled directory "{comic.srce_upscayled_dir}".'
+            )
+        if not os.path.isdir(comic.get_srce_upscayled_image_dir()):
+            raise Exception(
+                f"Could not find srce upscayled image directory"
+                f' "{comic.get_srce_upscayled_image_dir()}".'
+            )
+        if not os.path.isdir(comic.srce_restored_dir):
+            raise Exception(f'Could not find srce restored directory "{comic.srce_restored_dir}".')
+        if not os.path.isdir(comic.get_srce_restored_image_dir()):
+            raise Exception(
+                f"Could not find srce restored image directory"
+                f' "{comic.get_srce_restored_image_dir()}".'
+            )
+        if not os.path.isdir(comic.srce_fixes_dir):
+            raise Exception(f'Could not find srce fixes directory "{comic.srce_fixes_dir}".')
+        if not os.path.isdir(comic.get_srce_fixes_image_dir()):
+            raise Exception(
+                f'Could not find srce fixes image directory "{comic.get_srce_fixes_image_dir()}".'
+            )
+        if not os.path.isdir(comic.srce_restored_fixes_dir):
+            raise Exception(
+                f'Could not find srce restored fixes directory "{comic.srce_restored_fixes_dir}".'
+            )
+        if not os.path.isdir(comic.get_srce_restored_fixes_image_dir()):
+            raise Exception(
+                f"Could not find srce restored fixes image directory"
+                f' "{comic.get_srce_fixes_image_dir()}".'
+            )
+
+        return comic
 
 
 def _get_comics_database_dir(db_dir: str) -> str:
