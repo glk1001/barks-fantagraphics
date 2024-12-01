@@ -1,4 +1,5 @@
 import configparser
+import difflib
 import logging
 import os
 from configparser import ConfigParser, ExtendedInterpolation
@@ -49,6 +50,8 @@ class ComicsDatabase:
         self._database_dir = _get_comics_database_dir(database_dir)
         self._story_titles_dir = _get_story_titles_dir(self._database_dir)
         self._all_comic_book_info = get_all_comic_book_info(self._database_dir)
+        self._ini_files = [f for f in os.listdir(self._story_titles_dir) if f.endswith(".ini")]
+        self._story_titles = set([Path(f).stem for f in self._ini_files])
 
     def get_comics_database_dir(self) -> str:
         return self._database_dir
@@ -59,24 +62,18 @@ class ComicsDatabase:
     def get_ini_file(self, story_title: str) -> str:
         return os.path.join(self._story_titles_dir, story_title + ".ini")
 
+    def is_story_title(self, title: str) -> bool:
+        return title in self._story_titles
+
     def get_all_story_titles(self) -> List[str]:
-        ini_files = [f for f in os.listdir(self._story_titles_dir) if f.endswith(".ini")]
-
-        story_titles = []
-        for ini_file in ini_files:
-            story_title = Path(ini_file).stem
-            story_titles.append(story_title)
-
-        return sorted(story_titles)
+        return sorted(self._story_titles)
 
     def get_all_story_titles_in_fantagraphics_volume(self, volume_nums: List[int]) -> List[str]:
-        ini_files = [f for f in os.listdir(self._story_titles_dir) if f.endswith(".ini")]
-
         config = ConfigParser(interpolation=ExtendedInterpolation())
         story_titles = []
         for volume_num in volume_nums:
             fanta_key = f"FANTA_{volume_num:02}"
-            for file in ini_files:
+            for file in self._ini_files:
                 ini_file = os.path.join(self._story_titles_dir, file)
                 config.read(ini_file)
                 if config["info"]["source_comic"] == fanta_key:
@@ -202,6 +199,12 @@ class ComicsDatabase:
             )
 
     def get_comic_book(self, story_title: str) -> ComicBook:
+        if story_title not in self._story_titles:
+            close = difflib.get_close_matches(story_title, self._story_titles, 1, 0.5)
+            if close:
+                raise Exception(f'Could not find title "{story_title}". Did you mean "{close[0]}"?')
+            raise Exception(f'Could not find title "{story_title}".')
+
         ini_file = self.get_ini_file(story_title)
         logging.info(f'Getting comic book info from config file "{ini_file}".')
 
