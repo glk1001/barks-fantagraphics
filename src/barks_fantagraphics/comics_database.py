@@ -32,8 +32,9 @@ from .comics_info import (
     FANTAGRAPHICS_DIRNAME,
     FANTAGRAPHICS_UPSCAYLED_DIRNAME,
     FANTAGRAPHICS_RESTORED_DIRNAME,
+    FANTAGRAPHICS_FIXES_DIRNAME,
+    FANTAGRAPHICS_UPSCAYLED_FIXES_DIRNAME,
     FANTAGRAPHICS_RESTORED_FIXES_DIRNAME,
-    FANTAGRAPHICS_FIXES_AND_ADDITIONS_DIRNAME,
     FANTAGRAPHICS_PANEL_SEGMENTS_DIRNAME,
     get_all_comic_book_info,
 )
@@ -136,16 +137,27 @@ class ComicsDatabase:
         title = self.get_fantagraphics_volume_title(volume_num)
         return str(os.path.join(self.get_fantagraphics_panel_segments_root_dir(), title))
 
-    def get_fantagraphics_fixes_and_additions_root_dir(self) -> str:
-        return self._get_root_dir(self.get_fantagraphics_fixes_and_additions_dirname())
+    def get_fantagraphics_fixes_root_dir(self) -> str:
+        return self._get_root_dir(self.get_fantagraphics_fixes_dirname())
 
-    def get_fantagraphics_fixes_and_additions_dirname(self) -> str:
-        return FANTAGRAPHICS_FIXES_AND_ADDITIONS_DIRNAME
+    def get_fantagraphics_fixes_dirname(self) -> str:
+        return FANTAGRAPHICS_FIXES_DIRNAME
 
-    def get_fantagraphics_fixes_and_additions_volume_dir(self, volume_num: int) -> str:
+    def get_fantagraphics_fixes_volume_dir(self, volume_num: int) -> str:
         title = self.get_fantagraphics_volume_title(volume_num)
-        return str(os.path.join(self.get_fantagraphics_fixes_and_additions_root_dir(), title))
+        return str(os.path.join(self.get_fantagraphics_fixes_root_dir(), title))
 
+    def get_upscayled_fantagraphics_fixes_root_dir(self) -> str:
+        return self._get_root_dir(self.get_upscayled_fantagraphics_fixes_dirname())
+
+    def get_upscayled_fantagraphics_fixes_dirname(self) -> str:
+        return FANTAGRAPHICS_UPSCAYLED_FIXES_DIRNAME
+
+    def get_upscayled_fantagraphics_fixes_volume_dir(self, volume_num: int) -> str:
+        title = self.get_fantagraphics_volume_title(volume_num)
+        return str(os.path.join(self.get_upscayled_fantagraphics_fixes_root_dir(), title))
+
+    # TODO: Not need once all files are restored
     def get_restored_fantagraphics_fixes_root_dir(self) -> str:
         return self._get_root_dir(self.get_restored_fantagraphics_fixes_dirname())
 
@@ -159,23 +171,27 @@ class ComicsDatabase:
     def make_all_fantagraphics_directories(self) -> None:
         for volume in range(2, 21):
             os.makedirs(
+                os.path.join(self.get_upscayled_fantagraphics_volume_dir(volume), IMAGES_SUBDIR),
+                exist_ok=True,
+            )
+            os.makedirs(
                 os.path.join(self.get_restored_fantagraphics_volume_dir(volume), IMAGES_SUBDIR),
+                exist_ok=True,
+            )
+            os.makedirs(
+                os.path.join(self.get_fantagraphics_fixes_volume_dir(volume), IMAGES_SUBDIR),
+                exist_ok=True,
+            )
+            os.makedirs(
+                os.path.join(
+                    self.get_upscayled_fantagraphics_fixes_volume_dir(volume), IMAGES_SUBDIR
+                ),
                 exist_ok=True,
             )
             os.makedirs(
                 os.path.join(
                     self.get_restored_fantagraphics_fixes_volume_dir(volume), IMAGES_SUBDIR
                 ),
-                exist_ok=True,
-            )
-            os.makedirs(
-                os.path.join(
-                    self.get_fantagraphics_fixes_and_additions_volume_dir(volume), IMAGES_SUBDIR
-                ),
-                exist_ok=True,
-            )
-            os.makedirs(
-                os.path.join(self.get_upscayled_fantagraphics_volume_dir(volume), IMAGES_SUBDIR),
                 exist_ok=True,
             )
             os.makedirs(
@@ -201,7 +217,7 @@ class ComicsDatabase:
         cb_info: ComicBookInfo = self._all_comic_book_info[lookup_title]
         fanta_info = SOURCE_COMICS[config["info"]["source_comic"]]
         srce_dir = self.get_fantagraphics_volume_dir(fanta_info.volume)
-        srce_fixes_dir = self.get_fantagraphics_fixes_and_additions_volume_dir(fanta_info.volume)
+        srce_fixes_dir = self.get_fantagraphics_fixes_volume_dir(fanta_info.volume)
         srce_upscayled_dir = self.get_upscayled_fantagraphics_volume_dir(fanta_info.volume)
         srce_restored_dir = self.get_restored_fantagraphics_volume_dir(fanta_info.volume)
         srce_restored_fixes_dir = self.get_restored_fantagraphics_fixes_volume_dir(
@@ -216,6 +232,7 @@ class ComicsDatabase:
         if "extra_pub_info" in config["info"]:
             publication_text += "\n" + config["info"]["extra_pub_info"]
 
+        # noinspection PyTypeChecker
         config_page_images = [
             OriginalPage(key, PageType[config["pages"][key]]) for key in config["pages"]
         ]

@@ -1,7 +1,8 @@
+import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 from .comics_consts import (
     PageType,
@@ -13,9 +14,12 @@ from .comics_consts import (
     INSET_FILE_EXT,
 )
 from .comics_info import (
+    JPG_FILE_EXT,
+    PNG_FILE_EXT,
     ISSUE_NAME_AS_TITLE,
     MONTH_AS_LONG_STR,
     SHORT_ISSUE_NAME,
+    CENSORED_TITLES,
     SILENT_NIGHT,
     SILENT_NIGHT_PUBLICATION_ISSUE,
     ComicBookInfo,
@@ -104,6 +108,156 @@ class ComicBook:
 
     def get_srce_segments_root_dir(self) -> str:
         return os.path.dirname(self.panel_segments_dir)
+
+    def get_srce_upscayled_story_files(self, page_types: List[PageType]) -> List[str]:
+        image_dir = self.get_srce_upscayled_image_dir()
+
+        all_files = []
+        for page in self.page_images_in_order:
+            if page.page_type in page_types:
+                all_files.append(str(os.path.join(image_dir, page.page_filenames + PNG_FILE_EXT)))
+
+        return all_files
+
+    # TODO: Not needed once everything is restored
+    def get_srce_restored_story_files(self, page_types: List[PageType]) -> List[str]:
+        image_dir = self.get_srce_restored_image_dir()
+
+        all_files = []
+        for page in self.page_images_in_order:
+            if page.page_type in page_types:
+                all_files.append(str(os.path.join(image_dir, page.page_filenames + PNG_FILE_EXT)))
+
+        return all_files
+
+    def get_final_srce_story_files(self, page_types: List[PageType]) -> List[Tuple[str, bool]]:
+        all_files = []
+        for page in self.page_images_in_order:
+            if page.page_type in page_types:
+                file, modified = self.get_final_srce_story_file(page.page_filenames, page.page_type)
+                all_files.append((file, modified))
+
+        return all_files
+
+    def get_srce_with_fixes_story_files(self, page_types: List[PageType]) -> List[Tuple[str, bool]]:
+        all_files = []
+        for page in self.page_images_in_order:
+            if page.page_type in page_types:
+                file, modified = self._get_srce_with_fixes_story_file(
+                    page.page_filenames, page.page_type
+                )
+                all_files.append((file, modified))
+
+        return all_files
+
+    def get_final_srce_story_file(
+        self, page_filename: str, page_type: PageType
+    ) -> Tuple[str, bool]:
+        srce_restored_file, is_modified = self._get_srce_restored_file(page_filename, page_type)
+        if os.path.isfile(srce_restored_file):
+            return srce_restored_file, is_modified
+
+        return self._get_srce_with_fixes_story_file(page_filename, page_type)
+
+    def _get_srce_with_fixes_story_file(
+        self, page_filename: str, page_type: PageType
+    ) -> Tuple[str, bool]:
+        srce_file = str(os.path.join(self.get_srce_image_dir(), page_filename + JPG_FILE_EXT))
+        srce_fixes_file = str(
+            os.path.join(self.get_srce_fixes_image_dir(), page_filename + JPG_FILE_EXT)
+        )
+        if not os.path.isfile(srce_fixes_file):
+            return srce_file, False
+
+        if os.path.isfile(srce_file):
+            if self._is_fixes_special_case(page_filename, page_type):
+                logging.info(
+                    f"NOTE: Special case - using {page_type.name} fixes srce file:"
+                    f' "{srce_fixes_file}".'
+                )
+            else:
+                logging.info(f'NOTE: Using fixes srce file: "{srce_fixes_file}".')
+                if page_type not in [PageType.COVER, PageType.BODY]:
+                    raise Exception(f"Expected fixes page to be COVER or BODY: '{page_filename}'.")
+        elif self._is_fixes_special_case(page_filename, page_type):
+            logging.info(
+                f"NOTE: Special case - using ADDED fixes srce file for {page_type.name} page:"
+                f' "{srce_fixes_file}".'
+            )
+        else:
+            logging.info(
+                f"NOTE: Using added srce file of type {page_type.name}:" f' "{srce_fixes_file}".'
+            )
+            if page_type in [PageType.COVER, PageType.BODY]:
+                raise Exception(f"Expected added page to be NOT COVER OR BODY: '{page_filename}'.")
+
+        is_modified_file = page_type in [PageType.COVER, PageType.BODY]
+
+        return srce_fixes_file, is_modified_file
+
+    def _get_srce_restored_file(self, page_filename: str, page_type: PageType) -> Tuple[str, bool]:
+        srce_restored_file = str(
+            os.path.join(self.get_srce_restored_image_dir(), page_filename + JPG_FILE_EXT)
+        )
+        if os.path.isfile(srce_restored_file):
+            raise Exception(f'Restored files should be png not jpg: "{srce_restored_file}".')
+        srce_restored_fixes_file = str(
+            os.path.join(self.get_srce_restored_fixes_image_dir(), page_filename + JPG_FILE_EXT)
+        )
+        if os.path.isfile(srce_restored_fixes_file):
+            raise Exception(
+                f'Restored fixes files should be png not jpg: "{srce_restored_fixes_file}".'
+            )
+
+        srce_restored_file = str(
+            os.path.join(self.get_srce_restored_image_dir(), page_filename + PNG_FILE_EXT)
+        )
+        srce_restored_fixes_file = str(
+            os.path.join(self.get_srce_restored_fixes_image_dir(), page_filename + PNG_FILE_EXT)
+        )
+
+        if not os.path.isfile(srce_restored_fixes_file):
+            return srce_restored_file, False
+
+        if os.path.isfile(srce_restored_file):
+            if self._is_fixes_special_case(page_filename, page_type):
+                logging.info(
+                    f"NOTE: Special case - using {page_type.name} restored fixes srce file:"
+                    f' "{srce_restored_fixes_file}".'
+                )
+            else:
+                logging.info(f'NOTE: Using restored fixes srce file: "{srce_restored_fixes_file}".')
+                if page_type not in [PageType.COVER, PageType.BODY]:
+                    raise Exception(
+                        f"Expected restored fixes page to be COVER or BODY:" f' "{page_filename}".'
+                    )
+        elif self._is_fixes_special_case(page_filename, page_type):
+            logging.info(
+                f"NOTE: Special case - using ADDED restored fixes srce file for"
+                f""
+                f' {page_type.name} page: "{srce_restored_fixes_file}".'
+            )
+        else:
+            logging.info(
+                f"NOTE: Using added srce restored file of type {page_type.name}:"
+                'f "{srce_restored_fixes_file}".'
+            )
+            if page_type in [PageType.COVER, PageType.BODY]:
+                raise Exception(f"Expected added page to be NOT COVER OR BODY: '{page_filename}'.")
+
+        is_modified_file = page_type in [PageType.COVER, PageType.BODY]
+
+        return srce_restored_fixes_file, is_modified_file
+
+    def _is_fixes_special_case(self, page_filename: str, page_type: PageType) -> bool:
+        if get_safe_title(self.title) == "Back to Long Ago!" and page_filename == "209":
+            return page_type == PageType.BACK_NO_PANELS
+        if self.file_title == "The Bill Collectors" and page_filename == "227":
+            return page_type == PageType.BODY
+        if self.file_title in CENSORED_TITLES:
+            return page_type == PageType.BODY
+
+        return False
 
     # TODO: Should dest stuff be elsewhere??
     def get_dest_root_dir(self) -> str:
