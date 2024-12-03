@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Tuple
 
-from .comics_utils import get_relpath
 from .comics_consts import (
     PageType,
     IMAGES_SUBDIR,
@@ -17,6 +16,7 @@ from .comics_consts import (
 from .comics_info import (
     JPG_FILE_EXT,
     PNG_FILE_EXT,
+    SVG_FILE_EXT,
     ISSUE_NAME_AS_TITLE,
     MONTH_AS_LONG_STR,
     SHORT_ISSUE_NAME,
@@ -27,6 +27,7 @@ from .comics_info import (
     SourceBook,
     get_formatted_day,
 )
+from .comics_utils import get_relpath
 
 STORY_PAGE_TYPES = [
     PageType.COVER,
@@ -73,7 +74,9 @@ class ComicBook:
     fanta_info: SourceBook
     srce_dir: str
     srce_upscayled_dir: str
+    srce_upscayled_restored_dir: str
     srce_restored_dir: str
+    srce_svg_restored_dir: str
     srce_fixes_dir: str
     srce_upscayled_fixes_dir: str
     srce_restored_fixes_dir: str  # TODO: Get rid of this????
@@ -103,8 +106,14 @@ class ComicBook:
     def get_srce_upscayled_image_dir(self) -> str:
         return os.path.join(self.srce_upscayled_dir, IMAGES_SUBDIR)
 
+    def get_srce_upscayled_restored_image_dir(self) -> str:
+        return os.path.join(self.srce_upscayled_restored_dir, IMAGES_SUBDIR)
+
     def get_srce_restored_image_dir(self) -> str:
         return os.path.join(self.srce_restored_dir, IMAGES_SUBDIR)
+
+    def get_srce_svg_restored_image_dir(self) -> str:
+        return os.path.join(self.srce_svg_restored_dir, IMAGES_SUBDIR)
 
     def get_srce_upscayled_fixes_image_dir(self) -> str:
         return os.path.join(self.srce_upscayled_fixes_dir, IMAGES_SUBDIR)
@@ -168,7 +177,8 @@ class ComicBook:
 
         return srce_upscayled_fixes_file, is_modified_file
 
-    # TODO: Not needed once everything is restored
+    # TODO: Simplify these duplications
+    # TODO: Not needed once everything is restored??????
     def get_srce_restored_story_files(self, page_types: List[PageType]) -> List[str]:
         image_dir = self.get_srce_restored_image_dir()
 
@@ -176,6 +186,26 @@ class ComicBook:
         for page in self.page_images_in_order:
             if page.page_type in page_types:
                 all_files.append(str(os.path.join(image_dir, page.page_filenames + PNG_FILE_EXT)))
+
+        return all_files
+
+    def get_srce_upscayled_restored_story_files(self, page_types: List[PageType]) -> List[str]:
+        image_dir = self.get_srce_upscayled_restored_image_dir()
+
+        all_files = []
+        for page in self.page_images_in_order:
+            if page.page_type in page_types:
+                all_files.append(str(os.path.join(image_dir, page.page_filenames + PNG_FILE_EXT)))
+
+        return all_files
+
+    def get_srce_svg_restored_story_files(self, page_types: List[PageType]) -> List[str]:
+        image_dir = self.get_srce_svg_restored_image_dir()
+
+        all_files = []
+        for page in self.page_images_in_order:
+            if page.page_type in page_types:
+                all_files.append(str(os.path.join(image_dir, page.page_filenames + SVG_FILE_EXT)))
 
         return all_files
 
