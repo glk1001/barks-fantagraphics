@@ -2,11 +2,11 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
+from .comics_utils import get_relpath
 from .comics_consts import (
     PageType,
-    BARKS_ROOT_DIR,
     IMAGES_SUBDIR,
     THE_CHRONOLOGICAL_DIRS_DIR,
     THE_CHRONOLOGICAL_DIR,
@@ -28,16 +28,15 @@ from .comics_info import (
     get_formatted_day,
 )
 
+STORY_PAGE_TYPES = [
+    PageType.COVER,
+    PageType.BODY,
+    PageType.FRONT_MATTER,
+    PageType.BACK_MATTER,
+]
+
 INTRO_TITLE_DEFAULT_FONT_SIZE = 155
 INTRO_AUTHOR_DEFAULT_FONT_SIZE = 90
-
-
-def get_barks_path(file: Union[str, Path]) -> str:
-    if str(file).startswith(BARKS_ROOT_DIR):
-        return os.path.relpath(file, BARKS_ROOT_DIR)
-
-    file_parts = Path(file).parts[-2:]
-    return str(os.path.join(*file_parts))
 
 
 @dataclass
@@ -151,7 +150,7 @@ class ComicBook:
         if os.path.isfile(srce_upscayled_file):
             logging.info(
                 f"NOTE: Using upscayled fixes srce file:"
-                f' "{get_barks_path(srce_upscayled_fixes_file)}".'
+                f' "{get_relpath(srce_upscayled_fixes_file)}".'
             )
             if page_type not in [PageType.COVER, PageType.BODY]:
                 raise Exception(
@@ -160,7 +159,7 @@ class ComicBook:
         else:
             logging.info(
                 f"NOTE: Using added srce upscayled file of type {page_type.name}:"
-                f' "{get_barks_path(srce_upscayled_fixes_file)}".'
+                f' "{get_relpath(srce_upscayled_fixes_file)}".'
             )
             if page_type in [PageType.COVER, PageType.BODY]:
                 raise Exception(f"Expected added page to be NOT COVER OR BODY: '{page_filename}'.")
@@ -223,21 +222,21 @@ class ComicBook:
             if self._is_fixes_special_case(page_filename, page_type):
                 logging.info(
                     f"NOTE: Special case - using {page_type.name} fixes srce file:"
-                    f' "{get_barks_path(srce_fixes_file)}".'
+                    f' "{get_relpath(srce_fixes_file)}".'
                 )
             else:
-                logging.info(f'NOTE: Using fixes srce file: "{get_barks_path(srce_fixes_file)}".')
+                logging.info(f'NOTE: Using fixes srce file: "{get_relpath(srce_fixes_file)}".')
                 if page_type not in [PageType.COVER, PageType.BODY]:
                     raise Exception(f"Expected fixes page to be COVER or BODY: '{page_filename}'.")
         elif self._is_fixes_special_case(page_filename, page_type):
             logging.info(
                 f"NOTE: Special case - using ADDED fixes srce file for {page_type.name} page:"
-                f' "{get_barks_path(srce_fixes_file)}".'
+                f' "{get_relpath(srce_fixes_file)}".'
             )
         else:
             logging.info(
                 f"NOTE: Using added srce file of type {page_type.name}:"
-                f' "{get_barks_path(srce_fixes_file)}".'
+                f' "{get_relpath(srce_fixes_file)}".'
             )
             if page_type in [PageType.COVER, PageType.BODY]:
                 raise Exception(f"Expected added page to be NOT COVER OR BODY: '{page_filename}'.")
@@ -274,12 +273,12 @@ class ComicBook:
             if self._is_fixes_special_case(page_filename, page_type):
                 logging.info(
                     f"NOTE: Special case - using {page_type.name} restored fixes srce file:"
-                    f' "{get_barks_path(srce_restored_fixes_file)}".'
+                    f' "{get_relpath(srce_restored_fixes_file)}".'
                 )
             else:
                 logging.info(
                     f"NOTE: Using restored fixes srce file:"
-                    f' "{get_barks_path(srce_restored_fixes_file)}".'
+                    f' "{get_relpath(srce_restored_fixes_file)}".'
                 )
                 if page_type not in [PageType.COVER, PageType.BODY]:
                     raise Exception(
@@ -288,12 +287,12 @@ class ComicBook:
         elif self._is_fixes_special_case(page_filename, page_type):
             logging.info(
                 f"NOTE: Special case - using ADDED restored fixes srce file for"
-                f' {page_type.name} page: "{get_barks_path(srce_restored_fixes_file)}".'
+                f' {page_type.name} page: "{get_relpath(srce_restored_fixes_file)}".'
             )
         else:
             logging.info(
                 f"NOTE: Using added srce restored file of type {page_type.name}:"
-                f' "{get_barks_path(srce_restored_fixes_file)}".'
+                f' "{get_relpath(srce_restored_fixes_file)}".'
             )
             if page_type in [PageType.COVER, PageType.BODY]:
                 raise Exception(f"Expected added page to be NOT COVER OR BODY: '{page_filename}'.")
@@ -481,3 +480,45 @@ def get_formatted_submitted_date(info: ComicBookInfo) -> str:
         f" on {MONTH_AS_LONG_STR[info.submitted_month]}"
         f" {get_formatted_day(info.submitted_day)}, {info.submitted_year}"
     )
+
+
+def get_story_files(image_dir: str, comic: ComicBook, file_ext: str) -> List[str]:
+    return get_story_files_of_page_type(image_dir, comic, file_ext, STORY_PAGE_TYPES)
+
+
+def get_story_files_of_page_type(
+    image_dir: str, comic: ComicBook, file_ext: str, page_types: List[PageType]
+) -> List[str]:
+    srce_pages = comic.page_images_in_order
+    all_files = []
+    for page in srce_pages:
+        if page.page_type in page_types:
+            all_files.append(os.path.join(image_dir, page.page_filenames + file_ext))
+
+    return all_files
+
+
+def get_abbrev_jpg_page_list(comic: ComicBook) -> List[str]:
+    return get_abbrev_jpg_page_of_type_list(comic, STORY_PAGE_TYPES)
+
+
+def get_abbrev_jpg_page_of_type_list(comic: ComicBook, page_types: List[PageType]) -> List[str]:
+    all_pages = []
+    for page in comic.config_page_images:
+        if page.page_type in page_types:
+            all_pages.append(page.page_filenames)
+
+    return all_pages
+
+
+def get_jpg_page_list(comic: ComicBook) -> List[str]:
+    return get_jpg_page_of_type_list(comic, STORY_PAGE_TYPES)
+
+
+def get_jpg_page_of_type_list(comic: ComicBook, page_types: List[PageType]) -> List[str]:
+    all_pages = []
+    for page in comic.page_images_in_order:
+        if page.page_type in page_types:
+            all_pages.append(page.page_filenames)
+
+    return all_pages
