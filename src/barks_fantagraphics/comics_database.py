@@ -55,6 +55,18 @@ class ComicsDatabase:
         self._all_comic_book_info = get_all_comic_book_info(self._database_dir)
         self._ini_files = [f for f in os.listdir(self._story_titles_dir) if f.endswith(".ini")]
         self._story_titles = set([Path(f).stem for f in self._ini_files])
+        self._issue_titles = self._get_all_issue_titles()
+
+    def _get_all_issue_titles(self):
+        all_issues = {}
+        for title in self._all_comic_book_info:
+            issue_title = self._all_comic_book_info[title].get_issue_title()
+            if issue_title not in all_issues:
+                all_issues[issue_title] = [title]
+            else:
+                all_issues[issue_title].append(title)
+
+        return all_issues
 
     def get_comics_database_dir(self) -> str:
         return self._database_dir
@@ -72,6 +84,15 @@ class ComicsDatabase:
         close = difflib.get_close_matches(title, self._story_titles, 1, 0.3)
         close_str = close[0] if close else ""
         return False, close_str
+
+    def get_story_title_from_issue(self, issue_title: str) -> Tuple[bool, List[str], str]:
+        issue_title = issue_title.upper()
+        if issue_title in self._issue_titles:
+            return True, self._issue_titles[issue_title], ""
+
+        close = difflib.get_close_matches(issue_title, self._issue_titles, 1, 0.7)
+        close_str = close[0] if close else ""
+        return False, [], close_str
 
     def get_all_story_titles(self) -> List[str]:
         return sorted(self._story_titles)
@@ -236,12 +257,27 @@ class ComicsDatabase:
                 exist_ok=True,
             )
 
-    def get_comic_book(self, story_title: str) -> ComicBook:
-        found, close = self.is_story_title(story_title)
-        if not found:
-            if close:
-                raise Exception(f'Could not find title "{story_title}". Did you mean "{close}"?')
-            raise Exception(f'Could not find title "{story_title}".')
+    def get_comic_book(self, title: str, allow_issue_titles: bool = True) -> ComicBook:
+        story_title = ""
+        if allow_issue_titles:
+            found, titles, close = self.get_story_title_from_issue(title)
+            if found:
+                if len(titles) > 1:
+                    titles_str = ", ".join([f'"{t}"' for t in titles])
+                    raise Exception(
+                        f"You cannot use an issue title that has multiple titles: {titles_str}."
+                    )
+                story_title = titles[0]
+            elif close:
+                raise Exception(f'Could not find issue title "{title}". Did you mean "{close}"?')
+        if not story_title:
+            found, close = self.is_story_title(title)
+            if found:
+                story_title = title
+            else:
+                if close:
+                    raise Exception(f'Could not find title "{title}". Did you mean "{close}"?')
+                raise Exception(f'Could not find title "{title}".')
 
         ini_file = self.get_ini_file(story_title)
         logging.info(f'Getting comic book info from config file "{get_clean_path(ini_file)}".')

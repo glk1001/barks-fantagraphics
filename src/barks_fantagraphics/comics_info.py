@@ -65,6 +65,10 @@ class ComicBookInfo:
     number_in_series: int = -1
     chronological_number: int = -1
 
+    def get_issue_title(self):
+        short_issue_name = SHORT_ISSUE_NAME[self.issue_name]
+        return f"{short_issue_name} {self.issue_number}"
+
 
 ComicBookInfoDict = OrderedDict[str, ComicBookInfo]
 

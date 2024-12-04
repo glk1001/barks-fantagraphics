@@ -19,7 +19,6 @@ from .comics_info import (
     SVG_FILE_EXT,
     ISSUE_NAME_AS_TITLE,
     MONTH_AS_LONG_STR,
-    SHORT_ISSUE_NAME,
     CENSORED_TITLES,
     SILENT_NIGHT,
     SILENT_NIGHT_PUBLICATION_ISSUE,
@@ -417,8 +416,7 @@ class ComicBook:
         return f"{issue_name}{self.comic_book_info.issue_number}"
 
     def get_comic_issue_title(self) -> str:
-        issue_name = SHORT_ISSUE_NAME[self.comic_book_info.issue_name]
-        return f"{issue_name} {self.comic_book_info.issue_number}"
+        return self.comic_book_info.get_issue_title()
 
     def get_title_with_issue_num(self) -> str:
         return f"{self.get_dest_rel_dirname()} [{self.get_comic_issue_title()}]"
