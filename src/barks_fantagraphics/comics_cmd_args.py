@@ -9,6 +9,7 @@ from .comics_database import ComicsDatabase, get_default_comics_database_dir
 COMICS_DATABASE_DIR_ARG = "--comics-database-dir"
 VOLUME_ARG = "--volume"
 TITLE_ARG = "--title"
+WORK_DIR_ARG = "--work-dir"
 PAGE_ARG = "--page"
 
 
@@ -16,6 +17,7 @@ class CmdArgNames(Flag):
     COMICS_DATABASE_DIR = auto()
     VOLUME = auto()
     TITLE = auto()
+    WORK_DIR= auto()
     PAGE = auto()
 
 
@@ -58,6 +60,11 @@ class CmdArgs:
         vol_list = list(intspan(self._cmd_args.volume))
         return self._comics_database.get_all_story_titles_in_fantagraphics_volume(vol_list)
 
+    def get_work_dir(self) -> str:
+        if CmdArgNames.WORK_DIR not in self._required_args:
+            raise Exception(f"'{WORK_DIR_ARG}' was not specified as an argument.")
+        return self._cmd_args.work_dir
+
     def get_volume(self) -> str:
         volumes = self.get_volumes()
         if len(volumes) > 1:
@@ -90,6 +97,12 @@ class CmdArgs:
         )
         parser.add_argument(
             VOLUME_ARG,
+            action="store",
+            type=str,
+            required=False,
+        )
+        parser.add_argument(
+            WORK_DIR_ARG,
             action="store",
             type=str,
             required=False,
@@ -135,6 +148,9 @@ class CmdArgs:
         if CmdArgNames.TITLE in self._required_args and not args.title:
             self._error_msg = f"ERROR: You must specify a '{TITLE_ARG}' argument."
             return
+        if CmdArgNames.WORK_DIR in self._required_args and not args.work_dir:
+            self._error_msg = f"ERROR: You must specify a '{WORK_DIR_ARG}' argument."
+            return
         if CmdArgNames.PAGE in self._required_args and not args.page:
             self._error_msg = f"ERROR: You must specify a '{PAGE_ARG}' argument."
             return
@@ -144,6 +160,9 @@ class CmdArgs:
             return
         if CmdArgNames.TITLE not in self._required_args and args.title:
             self._error_msg = f"ERROR: Unexpected argument: '{TITLE_ARG}'."
+            return
+        if CmdArgNames.WORK_DIR not in self._required_args and args.work_dir:
+            self._error_msg = f"ERROR: Unexpected argument: '{WORK_DIR_ARG}'."
             return
         if CmdArgNames.PAGE not in self._required_args and args.page:
             self._error_msg = f"ERROR: Unexpected argument: '{PAGE_ARG}'."
