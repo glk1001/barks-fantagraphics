@@ -32,7 +32,7 @@ from .comics_info import (
     SOURCE_COMICS,
     FANTAGRAPHICS_DIRNAME,
     FANTAGRAPHICS_UPSCAYLED_DIRNAME,
-    FANTAGRAPHICS_UPSCAYLED_RESTORED_DIRNAME,
+    FANTAGRAPHICS_RESTORED_UPSCAYLED_DIRNAME,
     FANTAGRAPHICS_RESTORED_DIRNAME,
     FANTAGRAPHICS_RESTORED_SVG_DIRNAME,
     FANTAGRAPHICS_FIXES_DIRNAME,
@@ -144,16 +144,6 @@ class ComicsDatabase:
         title = self.get_fantagraphics_volume_title(volume_num)
         return str(os.path.join(self.get_fantagraphics_upscayled_root_dir(), title))
 
-    def get_fantagraphics_upscayled_restored_root_dir(self) -> str:
-        return self._get_root_dir(self.get_fantagraphics_upscayled_restored_dirname())
-
-    def get_fantagraphics_upscayled_restored_dirname(self) -> str:
-        return FANTAGRAPHICS_UPSCAYLED_RESTORED_DIRNAME
-
-    def get_fantagraphics_upscayled_restored_volume_dir(self, volume_num: int) -> str:
-        title = self.get_fantagraphics_volume_title(volume_num)
-        return str(os.path.join(self.get_fantagraphics_upscayled_restored_root_dir(), title))
-
     def get_fantagraphics_restored_root_dir(self) -> str:
         return self._get_root_dir(self.get_fantagraphics_restored_dirname())
 
@@ -163,6 +153,16 @@ class ComicsDatabase:
     def get_fantagraphics_restored_volume_dir(self, volume_num: int) -> str:
         title = self.get_fantagraphics_volume_title(volume_num)
         return str(os.path.join(self.get_fantagraphics_restored_root_dir(), title))
+
+    def get_fantagraphics_restored_upscayled_root_dir(self) -> str:
+        return self._get_root_dir(self.get_fantagraphics_restored_upscayled_dirname())
+
+    def get_fantagraphics_restored_upscayled_dirname(self) -> str:
+        return FANTAGRAPHICS_RESTORED_UPSCAYLED_DIRNAME
+
+    def get_fantagraphics_restored_upscayled_volume_dir(self, volume_num: int) -> str:
+        title = self.get_fantagraphics_volume_title(volume_num)
+        return str(os.path.join(self.get_fantagraphics_restored_upscayled_root_dir(), title))
 
     def get_fantagraphics_restored_svg_root_dir(self) -> str:
         return self._get_root_dir(self.get_fantagraphics_restored_svg_dirname())
@@ -225,52 +225,25 @@ class ComicsDatabase:
         title = self.get_fantagraphics_volume_title(volume_num)
         return str(os.path.join(self.get_fantagraphics_restored_fixes_root_dir(), title))
 
+    def _make_images_dir(self, volume_dirname: str) -> None:
+        images_dirname = os.path.join(volume_dirname, IMAGES_SUBDIR)
+        if os.path.isdir(images_dirname):
+            logging.debug(f'Dir already exists - nothing to do: "{images_dirname}".')
+        else:
+            os.makedirs(images_dirname)
+            logging.info(f'Created dir "{images_dirname}".')
+
     def make_all_fantagraphics_directories(self) -> None:
         for volume in range(2, 21):
-            os.makedirs(
-                os.path.join(self.get_fantagraphics_upscayled_volume_dir(volume), IMAGES_SUBDIR),
-                exist_ok=True,
-            )
-            os.makedirs(
-                os.path.join(
-                    self.get_fantagraphics_upscayled_restored_volume_dir(volume), IMAGES_SUBDIR
-                ),
-                exist_ok=True,
-            )
-            os.makedirs(
-                os.path.join(self.get_fantagraphics_restored_volume_dir(volume), IMAGES_SUBDIR),
-                exist_ok=True,
-            )
-            os.makedirs(
-                os.path.join(self.get_fantagraphics_restored_svg_volume_dir(volume), IMAGES_SUBDIR),
-                exist_ok=True,
-            )
-            os.makedirs(
-                os.path.join(self.get_fantagraphics_fixes_volume_dir(volume), IMAGES_SUBDIR),
-                exist_ok=True,
-            )
-            os.makedirs(
-                os.path.join(
-                    self.get_fantagraphics_upscayled_fixes_volume_dir(volume), IMAGES_SUBDIR
-                ),
-                exist_ok=True,
-            )
-            os.makedirs(
-                os.path.join(
-                    self.get_fantagraphics_restored_fixes_volume_dir(volume), IMAGES_SUBDIR
-                ),
-                exist_ok=True,
-            )
-            os.makedirs(
-                os.path.join(self.get_fantagraphics_restored_ocr_volume_dir(volume), IMAGES_SUBDIR),
-                exist_ok=True,
-            )
-            os.makedirs(
-                os.path.join(
-                    self.get_fantagraphics_panel_segments_volume_dir(volume), IMAGES_SUBDIR
-                ),
-                exist_ok=True,
-            )
+            self._make_images_dir(self.get_fantagraphics_upscayled_volume_dir(volume))
+            self._make_images_dir(self.get_fantagraphics_restored_volume_dir(volume))
+            self._make_images_dir(self.get_fantagraphics_restored_upscayled_volume_dir(volume))
+            self._make_images_dir(self.get_fantagraphics_restored_svg_volume_dir(volume))
+            self._make_images_dir(self.get_fantagraphics_restored_ocr_volume_dir(volume))
+            self._make_images_dir(self.get_fantagraphics_fixes_volume_dir(volume))
+            self._make_images_dir(self.get_fantagraphics_upscayled_fixes_volume_dir(volume))
+            self._make_images_dir(self.get_fantagraphics_restored_fixes_volume_dir(volume))
+            self._make_images_dir(self.get_fantagraphics_panel_segments_volume_dir(volume))
 
     def get_comic_book(self, title: str, allow_issue_titles: bool = True) -> ComicBook:
         story_title = ""
@@ -311,7 +284,7 @@ class ComicsDatabase:
 
         srce_dir = self.get_fantagraphics_volume_dir(fanta_info.volume)
         srce_upscayled_dir = self.get_fantagraphics_upscayled_volume_dir(fanta_info.volume)
-        srce_upscayled_restored_dir = self.get_fantagraphics_upscayled_restored_volume_dir(
+        srce_restored_upscayled_dir = self.get_fantagraphics_restored_upscayled_volume_dir(
             fanta_info.volume
         )
         srce_restored_dir = self.get_fantagraphics_restored_volume_dir(fanta_info.volume)
@@ -360,8 +333,8 @@ class ComicsDatabase:
             fanta_info=fanta_info,
             srce_dir=srce_dir,
             srce_upscayled_dir=srce_upscayled_dir,
-            srce_upscayled_restored_dir=srce_upscayled_restored_dir,
             srce_restored_dir=srce_restored_dir,
+            srce_restored_upscayled_dir=srce_restored_upscayled_dir,
             srce_restored_svg_dir=srce_restored_svg_dir,
             srce_restored_ocr_dir=srce_restored_ocr_dir,
             srce_fixes_dir=srce_fixes_dir,

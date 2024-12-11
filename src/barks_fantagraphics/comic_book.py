@@ -68,8 +68,8 @@ class ComicBook:
     fanta_info: SourceBook
     srce_dir: str
     srce_upscayled_dir: str
-    srce_upscayled_restored_dir: str
     srce_restored_dir: str
+    srce_restored_upscayled_dir: str
     srce_restored_svg_dir: str
     srce_restored_ocr_dir: str
     srce_fixes_dir: str
@@ -102,7 +102,7 @@ class ComicBook:
         return os.path.join(self.srce_upscayled_dir, IMAGES_SUBDIR)
 
     def get_srce_upscayled_restored_image_dir(self) -> str:
-        return os.path.join(self.srce_upscayled_restored_dir, IMAGES_SUBDIR)
+        return os.path.join(self.srce_restored_upscayled_dir, IMAGES_SUBDIR)
 
     def get_srce_restored_image_dir(self) -> str:
         return os.path.join(self.srce_restored_dir, IMAGES_SUBDIR)
@@ -187,7 +187,7 @@ class ComicBook:
 
         return all_files
 
-    def get_srce_upscayled_restored_story_files(self, page_types: List[PageType]) -> List[str]:
+    def get_srce_restored_upscayled_story_files(self, page_types: List[PageType]) -> List[str]:
         image_dir = self.get_srce_upscayled_restored_image_dir()
 
         all_files = []
