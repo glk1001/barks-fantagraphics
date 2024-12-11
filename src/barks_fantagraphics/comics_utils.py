@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import datetime
 from pathlib import Path
@@ -70,3 +71,11 @@ def file_is_older_than_timestamp(file: str, timestamp: float) -> bool:
     file_timestamp = get_timestamp(file)
 
     return file_timestamp > timestamp
+
+
+def setup_logging(log_level) -> None:
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s: %(message)s",
+        datefmt="%m/%d/%Y %H:%M:%S",
+        level=log_level,
+    )
