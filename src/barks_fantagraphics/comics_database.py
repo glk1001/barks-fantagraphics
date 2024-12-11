@@ -225,8 +225,8 @@ class ComicsDatabase:
         title = self.get_fantagraphics_volume_title(volume_num)
         return str(os.path.join(self.get_fantagraphics_restored_fixes_root_dir(), title))
 
-    def _make_images_dir(self, volume_dirname: str) -> None:
-        images_dirname = os.path.join(volume_dirname, IMAGES_SUBDIR)
+    def _make_images_dir(self, vol_dirname: str, images_subdir: str = IMAGES_SUBDIR) -> None:
+        images_dirname = os.path.join(vol_dirname, images_subdir) if images_subdir else vol_dirname
         if os.path.isdir(images_dirname):
             logging.debug(f'Dir already exists - nothing to do: "{images_dirname}".')
         else:
@@ -243,7 +243,7 @@ class ComicsDatabase:
             self._make_images_dir(self.get_fantagraphics_fixes_volume_dir(volume))
             self._make_images_dir(self.get_fantagraphics_upscayled_fixes_volume_dir(volume))
             self._make_images_dir(self.get_fantagraphics_restored_fixes_volume_dir(volume))
-            self._make_images_dir(self.get_fantagraphics_panel_segments_volume_dir(volume))
+            self._make_images_dir(self.get_fantagraphics_panel_segments_volume_dir(volume), "")
 
     def get_comic_book(self, title: str, allow_issue_titles: bool = True) -> ComicBook:
         story_title = ""

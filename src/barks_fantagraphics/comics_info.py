@@ -205,6 +205,7 @@ JPG_FILE_EXT = ".jpg"
 PNG_FILE_EXT = ".png"
 SVG_FILE_EXT = ".svg"
 JSON_FILE_EXT = ".json"
+TEXT_FILE_EXT = ".txt"
 
 VOLUME_01 = f"{CB} Vol. 1 - {DD} - Pirate Gold {SRC_SALEM}"
 VOLUME_02 = f"{CB} Vol. 2 - {DD} - Frozen Gold {SRC_SALEM}"
