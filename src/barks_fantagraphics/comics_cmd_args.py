@@ -17,7 +17,7 @@ class CmdArgNames(Flag):
     COMICS_DATABASE_DIR = auto()
     VOLUME = auto()
     TITLE = auto()
-    WORK_DIR= auto()
+    WORK_DIR = auto()
     PAGE = auto()
 
 
@@ -127,25 +127,22 @@ class CmdArgs:
         return args
 
     def _validate(self, args) -> None:
-        if CmdArgNames.VOLUME | CmdArgNames.TITLE == self._required_args:
-            if not args.volume and not args.title:
-                self._error_msg = f"ERROR: You must specify one of '{VOLUME_ARG}' or '{TITLE_ARG}."
-                return
-            if args.volume and args.title:
-                self._error_msg = (
-                    f"ERROR: You must specify only one of '{VOLUME_ARG}' or '{TITLE_ARG}."
-                )
-                return
+        if args.volume and args.title:
+            self._error_msg = f"ERROR: You must specify only one of '{VOLUME_ARG}' or '{TITLE_ARG}."
             return
 
         if args.volume and args.page:
             self._error_msg = f"ERROR: You cannot specify '{PAGE_ARG}' with '{VOLUME_ARG}'."
             return
 
-        if CmdArgNames.VOLUME in self._required_args and not args.volume:
+        if CmdArgNames.VOLUME in self._required_args and (
+            not args.volume or CmdArgNames.TITLE in self._required_args
+        ):
             self._error_msg = f"ERROR: You must specify a '{VOLUME_ARG}' argument."
             return
-        if CmdArgNames.TITLE in self._required_args and not args.title:
+        if CmdArgNames.TITLE in self._required_args and (
+            not args.title or CmdArgNames.VOLUME in self._required_args
+        ):
             self._error_msg = f"ERROR: You must specify a '{TITLE_ARG}' argument."
             return
         if CmdArgNames.WORK_DIR in self._required_args and not args.work_dir:
