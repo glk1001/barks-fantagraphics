@@ -25,6 +25,12 @@ def get_relpath(file: Union[str, Path]) -> str:
     return str(os.path.join(*file_parts))
 
 
+def get_abspath_from_relpath(relpath: str, root_dir=BARKS_ROOT_DIR) -> str:
+    if os.path.isabs(relpath):
+        return relpath
+    return os.path.join(root_dir, relpath)
+
+
 def get_clean_path(file: Union[str, Path]) -> str:
     return str(file).replace(str(Path.home()), "$HOME")
 
@@ -42,7 +48,8 @@ def get_timestamp_str(file: str) -> str:
 
 def get_timestamp_as_str(timestamp: float) -> str:
     timestamp_as_date = datetime.fromtimestamp(timestamp)
-    return timestamp_as_date.strftime("%Y_%m_%d-%H_%M_%S.%f")
+    timestamp_as_date_as_str = timestamp_as_date.strftime("%Y_%m_%d-%H_%M_%S.%f")
+    return timestamp_as_date_as_str[:-4]  # trim microseconds to two places
 
 
 def dest_file_is_older_than_srce(srce_file: str, dest_file: str, include_missing_dest=True) -> bool:
