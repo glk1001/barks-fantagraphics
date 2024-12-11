@@ -42,13 +42,17 @@ def get_timestamp(file: str) -> float:
     return os.path.getmtime(file)
 
 
-def get_timestamp_str(file: str) -> str:
-    return get_timestamp_as_str(get_timestamp(file))
+def get_timestamp_str(file: str, date_sep: str = "_", date_time_sep="-", hr_sep="_") -> str:
+    return get_timestamp_as_str(get_timestamp(file), date_sep, date_time_sep, hr_sep)
 
 
-def get_timestamp_as_str(timestamp: float) -> str:
+def get_timestamp_as_str(
+    timestamp: float, date_sep: str = "_", date_time_sep="-", hr_sep="_"
+) -> str:
     timestamp_as_date = datetime.fromtimestamp(timestamp)
-    timestamp_as_date_as_str = timestamp_as_date.strftime("%Y_%m_%d-%H_%M_%S.%f")
+    timestamp_as_date_as_str = timestamp_as_date.strftime(
+        f"%Y{date_sep}%m{date_sep}%d{date_time_sep}%H{hr_sep}%M{hr_sep}%S.%f"
+    )
     return timestamp_as_date_as_str[:-4]  # trim microseconds to two places
 
 
