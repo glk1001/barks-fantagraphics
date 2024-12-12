@@ -7,6 +7,7 @@ from typing import List, Tuple
 from .comics_consts import (
     PageType,
     IMAGES_SUBDIR,
+    BOUNDED_SUBDIR,
     THE_CHRONOLOGICAL_DIRS_DIR,
     THE_CHRONOLOGICAL_DIR,
     THE_COMICS_DIR,
@@ -96,17 +97,14 @@ class ComicBook:
     def get_srce_image_dir(self) -> str:
         return os.path.join(self.srce_dir, IMAGES_SUBDIR)
 
-    def get_srce_fixes_image_dir(self) -> str:
-        return os.path.join(self.srce_fixes_dir, IMAGES_SUBDIR)
-
     def get_srce_upscayled_image_dir(self) -> str:
         return os.path.join(self.srce_upscayled_dir, IMAGES_SUBDIR)
 
-    def get_srce_restored_upscayled_image_dir(self) -> str:
-        return os.path.join(self.srce_restored_upscayled_dir, IMAGES_SUBDIR)
-
     def get_srce_restored_image_dir(self) -> str:
         return os.path.join(self.srce_restored_dir, IMAGES_SUBDIR)
+
+    def get_srce_restored_upscayled_image_dir(self) -> str:
+        return os.path.join(self.srce_restored_upscayled_dir, IMAGES_SUBDIR)
 
     def get_srce_restored_svg_image_dir(self) -> str:
         return os.path.join(self.srce_restored_svg_dir, IMAGES_SUBDIR)
@@ -114,11 +112,20 @@ class ComicBook:
     def get_srce_restored_ocr_image_dir(self) -> str:
         return os.path.join(self.srce_restored_ocr_dir, IMAGES_SUBDIR)
 
+    def get_srce_fixes_image_dir(self) -> str:
+        return os.path.join(self.srce_fixes_dir, IMAGES_SUBDIR)
+
     def get_srce_upscayled_fixes_image_dir(self) -> str:
         return os.path.join(self.srce_upscayled_fixes_dir, IMAGES_SUBDIR)
 
+    def get_srce_fixes_bounded_dir(self) -> str:
+        return os.path.join(self.get_srce_fixes_image_dir(), BOUNDED_SUBDIR)
+
     def get_srce_restored_fixes_image_dir(self) -> str:
         return os.path.join(self.srce_restored_fixes_dir, IMAGES_SUBDIR)
+
+    def get_srce_restored_fixes_bounded_dir(self) -> str:
+        return os.path.join(self.get_srce_restored_fixes_image_dir(), BOUNDED_SUBDIR)
 
     def get_srce_upscayled_story_files(self, page_types: List[PageType]) -> List[str]:
         all_files = []
@@ -356,6 +363,28 @@ class ComicBook:
             return page_type == PageType.BODY
 
         return False
+
+    def get_fixes_panel_bounds_file(self, page_num: int) -> str:
+        panels_bounds_file = os.path.join(
+            self.get_srce_fixes_bounded_dir(), get_page_str(page_num) + JPG_FILE_EXT
+        )
+        panels_bounds_restored_file = os.path.join(
+            self.get_srce_restored_fixes_bounded_dir(), get_page_str(page_num) + PNG_FILE_EXT
+        )
+
+        if os.path.isfile(panels_bounds_file):
+            if os.path.isfile(panels_bounds_restored_file):
+                raise Exception(
+                    f"Cannot have fixes and restored fixes bounds files: "
+                    f'"{panels_bounds_file}" and'
+                    f'"{panels_bounds_restored_file}".'
+                )
+            return panels_bounds_file
+
+        if os.path.isfile(panels_bounds_restored_file):
+            return panels_bounds_restored_file
+
+        return ""
 
     # TODO: Should dest stuff be elsewhere??
     def get_dest_root_dir(self) -> str:
