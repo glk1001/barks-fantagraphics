@@ -128,39 +128,39 @@ class CmdArgs:
 
     def _validate(self, args) -> None:
         if args.volume and args.title:
-            self._error_msg = f"ERROR: You must specify only one of '{VOLUME_ARG}' or '{TITLE_ARG}."
+            self._error_msg = f"You must specify only one of '{VOLUME_ARG}' or '{TITLE_ARG}."
             return
 
         if args.volume and args.page:
-            self._error_msg = f"ERROR: You cannot specify '{PAGE_ARG}' with '{VOLUME_ARG}'."
+            self._error_msg = f"You cannot specify '{PAGE_ARG}' with '{VOLUME_ARG}'."
             return
 
         if CmdArgNames.VOLUME in self._required_args and (
-            not args.volume or CmdArgNames.TITLE in self._required_args
+            not args.volume and CmdArgNames.TITLE not in self._required_args
         ):
-            self._error_msg = f"ERROR: You must specify a '{VOLUME_ARG}' argument."
+            self._error_msg = f"You must specify a '{VOLUME_ARG}' argument."
             return
         if CmdArgNames.TITLE in self._required_args and (
-            not args.title or CmdArgNames.VOLUME in self._required_args
+            not args.title and CmdArgNames.VOLUME not in self._required_args
         ):
-            self._error_msg = f"ERROR: You must specify a '{TITLE_ARG}' argument."
+            self._error_msg = f"You must specify a '{TITLE_ARG}' argument."
             return
         if CmdArgNames.WORK_DIR in self._required_args and not args.work_dir:
-            self._error_msg = f"ERROR: You must specify a '{WORK_DIR_ARG}' argument."
+            self._error_msg = f"You must specify a '{WORK_DIR_ARG}' argument."
             return
         if CmdArgNames.PAGE in self._required_args and not args.page:
-            self._error_msg = f"ERROR: You must specify a '{PAGE_ARG}' argument."
+            self._error_msg = f"You must specify a '{PAGE_ARG}' argument."
             return
 
         if CmdArgNames.VOLUME not in self._required_args and args.volume:
-            self._error_msg = f"ERROR: Unexpected argument: '{VOLUME_ARG}'."
+            self._error_msg = f"Unexpected argument: '{VOLUME_ARG}'."
             return
         if CmdArgNames.TITLE not in self._required_args and args.title:
-            self._error_msg = f"ERROR: Unexpected argument: '{TITLE_ARG}'."
+            self._error_msg = f"Unexpected argument: '{TITLE_ARG}'."
             return
         if CmdArgNames.WORK_DIR not in self._required_args and args.work_dir:
-            self._error_msg = f"ERROR: Unexpected argument: '{WORK_DIR_ARG}'."
+            self._error_msg = f"Unexpected argument: '{WORK_DIR_ARG}'."
             return
         if CmdArgNames.PAGE not in self._required_args and args.page:
-            self._error_msg = f"ERROR: Unexpected argument: '{PAGE_ARG}'."
+            self._error_msg = f"Unexpected argument: '{PAGE_ARG}'."
             return
