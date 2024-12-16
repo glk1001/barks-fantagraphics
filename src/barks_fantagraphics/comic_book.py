@@ -175,12 +175,10 @@ class ComicBook:
         return all_files
 
     def get_srce_restored_ocr_story_files(self, page_types: List[PageType]) -> List[str]:
-        image_dir = self.get_srce_restored_ocr_image_dir()
-
         all_files = []
         for page in self.page_images_in_order:
             if page.page_type in page_types:
-                all_files.append(str(os.path.join(image_dir, page.page_filenames + JSON_FILE_EXT)))
+                all_files.append(self.get_srce_restored_ocr_story_file(page.page_filenames))
 
         return all_files
 
@@ -204,21 +202,14 @@ class ComicBook:
 
         return all_files
 
-    def get_srce_page_bounds_files(self, page_types: List[PageType]) -> List[str]:
-        all_files = []
-        for page in self.page_images_in_order:
-            if page.page_type in page_types:
-                all_files.append(self.get_srce_page_bounds_file(page.page_filenames))
-
-        return all_files
-
     def get_srce_json_panel_bounds_files(self, page_types: List[PageType]) -> List[str]:
         all_files = []
         for page in self.page_images_in_order:
             if page.page_type in page_types:
-                all_files.append(self.get_srce_json_panel_segments_file(page.page_filenames))
+                all_files.append(self.get_srce_panel_segments_file(page.page_filenames))
 
         return all_files
+
     def get_srce_upscayled_story_file(self, page_num: str) -> str:
         return str(os.path.join(self.get_srce_upscayled_image_dir(), page_num + PNG_FILE_EXT))
 
@@ -233,10 +224,10 @@ class ComicBook:
     def get_srce_restored_svg_story_file(self, page_num: str) -> str:
         return str(os.path.join(self.get_srce_restored_svg_image_dir(), page_num + SVG_FILE_EXT))
 
-    def get_srce_page_bounds_file(self, page_num: str) -> str:
-        return str(os.path.join(self.panel_segments_dir, page_num + TEXT_FILE_EXT))
+    def get_srce_restored_ocr_story_file(self, page_num: str) -> str:
+        return str(os.path.join(self.srce_restored_ocr_dir, page_num + JSON_FILE_EXT))
 
-    def get_srce_json_panel_segments_file(self, page_num: str) -> str:
+    def get_srce_panel_segments_file(self, page_num: str) -> str:
         return str(os.path.join(self.panel_segments_dir, page_num + JSON_FILE_EXT))
 
     def get_srce_upscayled_with_fixes_story_file(
