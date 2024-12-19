@@ -42,7 +42,7 @@ from .comics_info import (
     FANTAGRAPHICS_RESTORED_OCR_DIRNAME,
     get_all_comic_book_info,
 )
-from .comics_utils import get_clean_path
+from .comics_utils import get_relpath
 
 
 def get_default_comics_database_dir() -> str:
@@ -309,7 +309,7 @@ class ComicsDatabase:
                 raise Exception(f'Could not find title "{title}".')
 
         ini_file = self.get_ini_file(story_title)
-        logging.info(f'Getting comic book info from config file "{get_clean_path(ini_file)}".')
+        logging.info(f'Getting comic book info from config file "{get_relpath(ini_file)}".')
 
         config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
         config.read(ini_file)

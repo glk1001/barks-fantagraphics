@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Union
@@ -16,6 +17,16 @@ def get_work_dir(work_dir_root: str) -> str:
     os.makedirs(work_dir)
 
     return work_dir
+
+
+def get_abbrev_path(file: Union[str, Path]) -> str:
+    abbrev = get_relpath(file)
+
+    abbrev = re.sub(r"Carl Barks ", "**", abbrev)
+    abbrev = re.sub(r" -.*- ", " - ", abbrev)
+    abbrev = re.sub(r" \(.*\)", "", abbrev)
+
+    return abbrev
 
 
 def get_relpath(file: Union[str, Path]) -> str:
