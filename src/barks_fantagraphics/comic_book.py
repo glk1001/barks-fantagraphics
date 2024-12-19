@@ -202,7 +202,7 @@ class ComicBook:
 
         return all_files
 
-    def get_srce_json_panel_bounds_files(self, page_types: List[PageType]) -> List[str]:
+    def get_srce_panel_segments_files(self, page_types: List[PageType]) -> List[str]:
         all_files = []
         for page in self.page_images_in_order:
             if page.page_type in page_types:

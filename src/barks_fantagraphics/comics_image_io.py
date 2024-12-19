@@ -1,5 +1,7 @@
 from typing import Dict
 
+import cv2 as cv
+import numpy as np
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
@@ -10,6 +12,20 @@ SAVE_JPG_QUALITY = 95
 SAVE_JPG_COMPRESS_LEVEL = 9
 
 METADATA_PROPERTY_GROUP = "BARKS"
+
+
+def get_bw_image_from_alpha(rgba_file: str) -> cv.typing.MatLike:
+    black_mask = cv.imread(rgba_file, -1)
+
+    scale = 4
+    black_mask = cv.resize(
+        black_mask, (0, 0), fx=1.0 / scale, fy=1.0 / scale, interpolation=cv.INTER_AREA
+    )
+
+    _, _, _, binary = cv.split(black_mask)
+    binary = np.uint8(255 - binary)
+
+    return binary
 
 
 def add_jpg_metadata(jpg_file: str, metadata: Dict[str, str]):

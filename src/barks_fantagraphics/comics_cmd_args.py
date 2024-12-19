@@ -6,6 +6,7 @@ from intspan import intspan
 
 from .comics_database import ComicsDatabase, get_default_comics_database_dir
 
+LOG_LEVEL_ARG = "--log-level"
 COMICS_DATABASE_DIR_ARG = "--comics-database-dir"
 VOLUME_ARG = "--volume"
 TITLE_ARG = "--title"
@@ -35,6 +36,9 @@ class CmdArgs:
         if not self._error_msg:
             return True, ""
         return False, self._error_msg
+
+    def get_log_level(self) -> str:
+        return self._cmd_args.log_level
 
     def get_comics_database(self) -> ComicsDatabase:
         return self._comics_database
@@ -89,6 +93,12 @@ class CmdArgs:
     def _get_args(self):
         parser = argparse.ArgumentParser(description=self._description)
 
+        parser.add_argument(
+            LOG_LEVEL_ARG,
+            action="store",
+            type=str,
+            default="INFO",
+        )
         parser.add_argument(
             COMICS_DATABASE_DIR_ARG,
             action="store",
