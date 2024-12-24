@@ -20,7 +20,6 @@ from .comics_info import (
     PNG_FILE_EXT,
     SVG_FILE_EXT,
     JSON_FILE_EXT,
-    TEXT_FILE_EXT,
     ISSUE_NAME_AS_TITLE,
     MONTH_AS_LONG_STR,
     CENSORED_TITLES,
@@ -234,9 +233,18 @@ class ComicBook:
         self, page_num: str, page_type: PageType
     ) -> Tuple[str, bool]:
         srce_upscayled_file = self.get_srce_upscayled_story_file(page_num)
+
         srce_upscayled_fixes_file = str(
             os.path.join(self.get_srce_upscayled_fixes_image_dir(), page_num + JPG_FILE_EXT)
         )
+        if os.path.isfile(srce_upscayled_fixes_file):
+            raise Exception(
+                f'Upscayled fixes file must be .png not .jpg: "{srce_upscayled_fixes_file}".'
+            )
+        srce_upscayled_fixes_file = str(
+            os.path.join(self.get_srce_upscayled_fixes_image_dir(), page_num + PNG_FILE_EXT)
+        )
+
         if not os.path.isfile(srce_upscayled_fixes_file):
             return srce_upscayled_file, False
 
