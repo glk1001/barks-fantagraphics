@@ -81,7 +81,7 @@ def dest_file_is_older_than_srce(srce_file: str, dest_file: str, include_missing
 def file_is_older_than_timestamp(file: str, timestamp: float) -> bool:
     file_timestamp = get_timestamp(file)
 
-    return file_timestamp > timestamp
+    return file_timestamp < timestamp
 
 
 def setup_logging(log_level) -> None:
