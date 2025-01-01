@@ -7,7 +7,7 @@ from typing import Any, Dict, Tuple
 
 from PIL import Image
 
-from barks_fantagraphics.comics_utils import get_relpath
+from barks_fantagraphics.comics_utils import get_abbrev_path
 
 BIG_NUM = 10000
 
@@ -47,7 +47,7 @@ class KumikoPanelSegmentation:
 
     def get_panels_segment_info(self, srce_image: Image, srce_filename: str) -> Dict[str, Any]:
         logging.debug(
-            f'Getting panel bounding box for "{get_relpath(srce_filename)}" using kumiko.'
+            f'Getting panel bounding box for "{get_abbrev_path(srce_filename)}" using kumiko.'
         )
 
         work_filename = str(

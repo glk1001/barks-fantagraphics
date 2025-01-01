@@ -3,7 +3,7 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Union
+from typing import Union, List
 
 from .comics_consts import BARKS_ROOT_DIR
 
@@ -52,6 +52,16 @@ def get_timestamp(file: str) -> float:
         return os.lstat(file).st_mtime
 
     return os.path.getmtime(file)
+
+
+def get_max_timestamp(files: List[str]) -> float:
+    max_timestamp = -1.0
+    for file in files:
+        timestamp = get_timestamp(file)
+        if timestamp > max_timestamp:
+            max_timestamp = timestamp
+
+    return max_timestamp
 
 
 def get_timestamp_str(file: str, date_sep: str = "_", date_time_sep="-", hr_sep="_") -> str:

@@ -29,7 +29,7 @@ from .comics_info import (
     SourceBook,
     get_formatted_day,
 )
-from .comics_utils import get_relpath
+from .comics_utils import get_abbrev_path
 
 INTRO_TITLE_DEFAULT_FONT_SIZE = 155
 INTRO_AUTHOR_DEFAULT_FONT_SIZE = 90
@@ -224,7 +224,8 @@ class ComicBook:
         return str(os.path.join(self.get_srce_restored_svg_image_dir(), page_num + SVG_FILE_EXT))
 
     def get_srce_restored_ocr_story_file(self, page_num: str) -> str:
-        return str(os.path.join(self.srce_restored_ocr_dir, page_num + JSON_FILE_EXT))
+        # return str(os.path.join(self.srce_restored_ocr_dir, "easyocr", page_num + JSON_FILE_EXT))
+        return str(os.path.join(self.srce_restored_ocr_dir, "paddleocr", page_num + JSON_FILE_EXT))
 
     def get_srce_panel_segments_file(self, page_num: str) -> str:
         return str(os.path.join(self.panel_segments_dir, page_num + JSON_FILE_EXT))
@@ -251,14 +252,14 @@ class ComicBook:
         if os.path.isfile(srce_upscayled_file):
             logging.info(
                 f"NOTE: Using upscayled fixes srce file:"
-                f' "{get_relpath(srce_upscayled_fixes_file)}".'
+                f' "{get_abbrev_path(srce_upscayled_fixes_file)}".'
             )
             if page_type not in [PageType.COVER, PageType.BODY]:
                 raise Exception(f"Expected upscayled fixes page to be COVER or BODY: '{page_num}'.")
         else:
             logging.info(
                 f"NOTE: Using added srce upscayled file of type {page_type.name}:"
-                f' "{get_relpath(srce_upscayled_fixes_file)}".'
+                f' "{get_abbrev_path(srce_upscayled_fixes_file)}".'
             )
             if page_type in [PageType.COVER, PageType.BODY]:
                 raise Exception(f"Expected added page to be NOT COVER OR BODY: '{page_num}'.")
@@ -268,13 +269,24 @@ class ComicBook:
         return srce_upscayled_fixes_file, is_modified_file
 
     def get_final_srce_story_file(self, page_num: str, page_type: PageType) -> Tuple[str, bool]:
+        if page_type in [
+            PageType.FRONT,
+            PageType.COVER,
+            PageType.PAINTING,
+            PageType.BACK_NO_PANELS,
+        ]:
+            srce_file, is_modified = self.get_srce_with_fixes_story_file(page_num, page_type)
+            print(srce_file)
+            if os.path.isfile(srce_file):
+                return srce_file, is_modified
+
         srce_restored_file, is_modified = self.get_srce_restored_with_fixes_file(
             page_num, page_type
         )
         if os.path.isfile(srce_restored_file):
             return srce_restored_file, is_modified
 
-        return self.get_srce_with_fixes_story_file(page_num, page_type)
+        raise Exception(f'Could not find restored source file "{srce_restored_file}".')
 
     def get_srce_with_fixes_story_file(
         self, page_num: str, page_type: PageType
@@ -290,21 +302,21 @@ class ComicBook:
             if self._is_fixes_special_case(page_num, page_type):
                 logging.info(
                     f"NOTE: Special case - using {page_type.name} fixes srce file:"
-                    f' "{get_relpath(srce_fixes_file)}".'
+                    f' "{get_abbrev_path(srce_fixes_file)}".'
                 )
             else:
-                logging.info(f'NOTE: Using fixes srce file: "{get_relpath(srce_fixes_file)}".')
+                logging.info(f'NOTE: Using fixes srce file: "{get_abbrev_path(srce_fixes_file)}".')
                 if page_type not in [PageType.COVER, PageType.BODY]:
                     raise Exception(f"Expected fixes page to be COVER or BODY: '{page_num}'.")
         elif self._is_fixes_special_case(page_num, page_type):
             logging.info(
                 f"NOTE: Special case - using ADDED fixes srce file for {page_type.name} page:"
-                f' "{get_relpath(srce_fixes_file)}".'
+                f' "{get_abbrev_path(srce_fixes_file)}".'
             )
         else:
             logging.info(
                 f"NOTE: Using added srce file of type {page_type.name}:"
-                f' "{get_relpath(srce_fixes_file)}".'
+                f' "{get_abbrev_path(srce_fixes_file)}".'
             )
             if page_type in [PageType.COVER, PageType.BODY]:
                 raise Exception(f"Expected added page to be NOT COVER OR BODY: '{page_num}'.")
@@ -343,12 +355,12 @@ class ComicBook:
             if self._is_fixes_special_case(page_num, page_type):
                 logging.info(
                     f"NOTE: Special case - using {page_type.name} restored fixes srce file:"
-                    f' "{get_relpath(srce_restored_fixes_file)}".'
+                    f' "{get_abbrev_path(srce_restored_fixes_file)}".'
                 )
             else:
                 logging.info(
                     f"NOTE: Using restored fixes srce file:"
-                    f' "{get_relpath(srce_restored_fixes_file)}".'
+                    f' "{get_abbrev_path(srce_restored_fixes_file)}".'
                 )
                 if page_type not in [PageType.COVER, PageType.BODY]:
                     raise Exception(
@@ -357,12 +369,12 @@ class ComicBook:
         elif self._is_fixes_special_case(page_num, page_type):
             logging.info(
                 f"NOTE: Special case - using ADDED restored fixes srce file for"
-                f' {page_type.name} page: "{get_relpath(srce_restored_fixes_file)}".'
+                f' {page_type.name} page: "{get_abbrev_path(srce_restored_fixes_file)}".'
             )
         else:
             logging.info(
                 f"NOTE: Using added srce restored file of type {page_type.name}:"
-                f' "{get_relpath(srce_restored_fixes_file)}".'
+                f' "{get_abbrev_path(srce_restored_fixes_file)}".'
             )
             if page_type in [PageType.COVER, PageType.BODY]:
                 raise Exception(f"Expected added page to be NOT COVER OR BODY: '{page_num}'.")

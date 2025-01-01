@@ -309,7 +309,7 @@ class ComicsDatabase:
                 raise Exception(f'Could not find title "{title}".')
 
         ini_file = self.get_ini_file(story_title)
-        logging.info(f'Getting comic book info from config file "{get_relpath(ini_file)}".')
+        logging.debug(f'Getting comic book info from config file "{get_relpath(ini_file)}".')
 
         config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
         config.read(ini_file)
